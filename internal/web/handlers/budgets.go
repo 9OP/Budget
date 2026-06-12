@@ -80,7 +80,7 @@ func (h *Handler) BudgetsPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	h.renderPage(w, "budgets", &BudgetsData{
+	h.renderPage(w, r, "budgets", &BudgetsData{
 		Month:      month,
 		MonthLabel: monthTime.Format(monthLabelLayout),
 		PrevMonth:  monthTime.AddDate(0, prevMonthOffset, 0).Format(monthLayout),

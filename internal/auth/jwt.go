@@ -36,22 +36,51 @@ func NewValidator(ctx context.Context, jwksURL string) (*Validator, error) {
 	return &Validator{cache: cache, jwksURL: jwksURL}, nil
 }
 
-// ValidateToken validates a Supabase JWT and returns the user ID (sub claim).
-func (v *Validator) ValidateToken(ctx context.Context, tokenStr string) (string, error) {
+// ValidateToken validates a Supabase JWT and returns the authenticated User.
+func (v *Validator) ValidateToken(ctx context.Context, tokenStr string) (User, error) {
 	keySet, err := v.cache.Get(ctx, v.jwksURL)
 	if err != nil {
-		return "", fmt.Errorf("get jwks: %w", err)
+		return User{}, fmt.Errorf("get jwks: %w", err)
 	}
 
 	token, err := jwt.Parse([]byte(tokenStr), jwt.WithKeySet(keySet))
 	if err != nil {
-		return "", ErrInvalidToken
+		return User{}, ErrInvalidToken
 	}
 
 	sub := token.Subject()
 	if sub == "" {
-		return "", ErrInvalidToken
+		return User{}, ErrInvalidToken
 	}
 
-	return sub, nil
+	return User{
+		ID:    sub,
+		Email: stringClaim(token, "email"),
+		Name:  nameFromToken(token),
+	}, nil
+}
+
+// nameFromToken extracts the display name from user_metadata, falling back to email.
+func nameFromToken(token jwt.Token) string {
+	meta, ok := token.PrivateClaims()["user_metadata"].(map[string]any)
+	if ok {
+		if name, nameOK := meta["full_name"].(string); nameOK && name != "" {
+			return name
+		}
+
+		if name, nameOK := meta["name"].(string); nameOK && name != "" {
+			return name
+		}
+	}
+
+	return stringClaim(token, "email")
+}
+
+func stringClaim(token jwt.Token, key string) string {
+	v, ok := token.PrivateClaims()[key].(string)
+	if !ok {
+		return ""
+	}
+
+	return v
 }

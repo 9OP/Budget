@@ -25,6 +25,7 @@
       <a href="/trends"     class="nav-link{{if eq .ActivePage "trends"}}    active{{end}}">Trends</a>
     </div>
     <div class="nav-actions">
+      <span class="nav-user">{{.CurrentUser.Name}}</span>
       <form method="post" action="/auth/logout" style="display:contents">
         <button type="submit" class="nav-link">Sign out</button>
       </form>

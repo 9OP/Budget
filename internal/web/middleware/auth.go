@@ -6,7 +6,7 @@ import (
 	"github.com/9op/budget/internal/auth"
 )
 
-// RequireAuth validates the session JWT cookie and injects user_id into the request context.
+// RequireAuth validates the session JWT cookie and injects the User into the request context.
 // Unauthenticated or expired requests are redirected to /login.
 func RequireAuth(validator *auth.Validator) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -17,14 +17,14 @@ func RequireAuth(validator *auth.Validator) func(http.Handler) http.Handler {
 				return
 			}
 
-			userID, err := validator.ValidateToken(r.Context(), cookie.Value)
+			user, err := validator.ValidateToken(r.Context(), cookie.Value)
 			if err != nil {
 				http.SetCookie(w, &http.Cookie{Name: "budget_session", MaxAge: -1, Path: "/"})
 				http.Redirect(w, r, "/login", http.StatusFound)
 				return
 			}
 
-			next.ServeHTTP(w, r.WithContext(auth.WithUserID(r.Context(), userID)))
+			next.ServeHTTP(w, r.WithContext(auth.WithUser(r.Context(), user)))
 		})
 	}
 }

@@ -103,7 +103,7 @@ func (h *Handler) ItemsPage(w http.ResponseWriter, r *http.Request) {
 		views = append(views, toItemView(item))
 	}
 
-	h.renderPage(w, "items", &ItemsData{
+	h.renderPage(w, r, "items", &ItemsData{
 		Items:        views,
 		Categories:   cats,
 		ItemFormData: itemFormData{Categories: cats},
