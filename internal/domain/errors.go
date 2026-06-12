@@ -28,3 +28,6 @@ var ErrItemNotFound = errors.New("item not found")
 
 // ErrBudgetNotFound is returned when no budget matches the given category and month.
 var ErrBudgetNotFound = errors.New("budget not found")
+
+// ErrUnauthenticated is returned when a repository call lacks a user ID in context.
+var ErrUnauthenticated = errors.New("unauthenticated")

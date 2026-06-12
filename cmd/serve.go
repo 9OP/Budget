@@ -12,6 +12,7 @@ import (
 	"github.com/9op/budget/internal/service"
 	"github.com/9op/budget/internal/store/postgres"
 	"github.com/9op/budget/internal/web"
+	"github.com/9op/budget/internal/web/handlers"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/cobra"
 )
@@ -46,7 +47,14 @@ func runServer(ctx context.Context) error {
 	repo := postgres.NewRepository(pool)
 	svc := service.NewService(repo)
 
-	handler, err := web.NewServer(svc)
+	handler, err := web.NewServer(svc, web.ServerConfig{
+		Auth: handlers.AuthConfig{
+			SupabaseURL:     cfg.SupabaseURL,
+			SupabaseAnonKey: cfg.SupabaseAnonKey,
+			JWTSecret:       cfg.JWTSecret,
+			AppURL:          cfg.AppURL,
+		},
+	})
 	if err != nil {
 		return fmt.Errorf("build server: %w", err)
 	}

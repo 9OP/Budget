@@ -26,18 +26,19 @@ const (
 
 // Handler holds dependencies for page and partial handlers.
 type Handler struct {
-	svc  *service.Service
-	tmpl templates
+	svc     *service.Service
+	tmpl    templates
+	authCfg AuthConfig
 }
 
 // NewHandler creates a Handler, parsing all templates from the given filesystem.
-func NewHandler(svc *service.Service, fsys fs.FS) (*Handler, error) {
+func NewHandler(svc *service.Service, fsys fs.FS, authCfg AuthConfig) (*Handler, error) {
 	tmpl, err := parseTemplates(fsys)
 	if err != nil {
 		return nil, fmt.Errorf("parse templates: %w", err)
 	}
 
-	return &Handler{svc: svc, tmpl: tmpl}, nil
+	return &Handler{svc: svc, tmpl: tmpl, authCfg: authCfg}, nil
 }
 
 // renderPage renders a full page. ActivePage is injected automatically

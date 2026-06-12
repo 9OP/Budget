@@ -244,6 +244,11 @@ linters:
 
   exclusions:
     rules:
+      # Third-party protocols require non-canonical header casing.
+      # HTMX expects "HX-Trigger"; Supabase expects "apikey".
+      - linters: [canonicalheader]
+        text: "HX-Trigger|apikey"
+
       # Tests: relax noisy linters that add friction without safety value.
       - path: _test\.go
         linters:
