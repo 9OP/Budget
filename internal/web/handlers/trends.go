@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"cmp"
 	"encoding/json"
 	"html/template"
 	"net/http"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/9op/budget/internal/domain"
@@ -35,7 +36,7 @@ func (h *Handler) TrendsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, _ := json.Marshal(buildTrendsChartData(items))
+	b, _ := json.Marshal(buildTrendsChartData(items)) //nolint:errchkjson // only safe types; Marshal cannot fail
 
 	h.renderPage(w, "trends", &TrendsData{
 		ChartJSON: template.JS(b), //nolint:gosec // JSON is generated internally, not user-controlled
@@ -60,6 +61,8 @@ func buildTrendsChartData(items []domain.Item) trendsChartData {
 			t[0] += item.Amount
 		case domain.Expense:
 			t[1] += item.Amount
+		default:
+			// unknown type; skip
 		}
 
 		totals[key] = t
@@ -70,12 +73,12 @@ func buildTrendsChartData(items []domain.Item) trendsChartData {
 		keys = append(keys, k)
 	}
 
-	sort.Slice(keys, func(i, j int) bool {
-		if keys[i].year != keys[j].year {
-			return keys[i].year < keys[j].year
+	slices.SortFunc(keys, func(a, b monthKey) int {
+		if a.year != b.year {
+			return cmp.Compare(a.year, b.year)
 		}
 
-		return keys[i].month < keys[j].month
+		return cmp.Compare(int(a.month), int(b.month))
 	})
 
 	if len(keys) == 0 {

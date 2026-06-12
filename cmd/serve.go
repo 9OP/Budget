@@ -10,7 +10,6 @@ import (
 
 	"github.com/9op/budget/internal/config"
 	"github.com/9op/budget/internal/service"
-	"github.com/9op/budget/internal/store/cache"
 	"github.com/9op/budget/internal/store/postgres"
 	"github.com/9op/budget/internal/web"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -40,12 +39,11 @@ func runServer(ctx context.Context) error {
 	}
 	defer pool.Close()
 
-	if err := pool.Ping(ctx); err != nil {
-		return fmt.Errorf("ping database: %w", err)
+	if pingErr := pool.Ping(ctx); pingErr != nil {
+		return fmt.Errorf("ping database: %w", pingErr)
 	}
 
-	pgRepo := postgres.NewRepository(pool)
-	repo := cache.NewRepository(pgRepo, cfg.CacheTTL)
+	repo := postgres.NewRepository(pool)
 	svc := service.NewService(repo)
 
 	handler, err := web.NewServer(svc)
@@ -57,6 +55,7 @@ func runServer(ctx context.Context) error {
 
 	slog.Info("starting server", slog.String("addr", srv.Addr))
 
+	//nolint:contextcheck // AfterFunc fires after ctx is done; shutdown uses its own timeout context
 	context.AfterFunc(ctx, func() {
 		slog.Info("shutting down server")
 

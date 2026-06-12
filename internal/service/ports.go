@@ -8,6 +8,8 @@ import (
 )
 
 // Repository is the port for data persistence.
+//
+//nolint:interfacebloat // all 12 methods are distinct domain operations; splitting would obscure the contract
 type Repository interface {
 	CreateItem(ctx context.Context, item domain.Item) (domain.Item, error)
 	GetItem(ctx context.Context, id string) (domain.Item, error)

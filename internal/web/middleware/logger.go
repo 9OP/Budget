@@ -1,3 +1,4 @@
+// Package middleware contains HTTP middleware for the budget web server.
 package middleware
 
 import (

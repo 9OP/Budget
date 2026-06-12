@@ -12,6 +12,8 @@ import (
 )
 
 // month returns a time.Time at the first instant of the given year/month (UTC).
+//
+//nolint:unparam // year is a meaningful parameter even if all current tests happen to use 2025
 func month(year int, m time.Month) time.Time {
 	return time.Date(year, m, 1, 0, 0, 0, 0, time.UTC)
 }

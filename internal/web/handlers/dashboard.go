@@ -117,7 +117,7 @@ func toChartJSON(cats []categoryView) template.JS {
 		cd.Colors[i] = c.Color
 	}
 
-	b, _ := json.Marshal(cd)
+	b, _ := json.Marshal(cd) //nolint:errchkjson // chartData contains only string/float64 slices; Marshal cannot fail
 
 	return template.JS(b) //nolint:gosec // JSON is generated internally, not user-controlled
 }
