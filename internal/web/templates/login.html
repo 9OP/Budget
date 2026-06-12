@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget — Sign in</title>
+  <link rel="icon" href="/static/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="/static/js/theme.js"></script>
+</head>
+<body>
+  <main class="main login-page">
+    <div class="login-card">
+      <h1 class="login-title">Budget</h1>
+      {{if .Error}}<p class="login-error">Authentication failed. Please try again.</p>{{end}}
+      <div class="login-actions">
+        <a href="/auth/login?provider=google" class="btn btn-oauth">Sign in with Google</a>
+        <a href="/auth/login?provider=github" class="btn btn-oauth">Sign in with GitHub</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

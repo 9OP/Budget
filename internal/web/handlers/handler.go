@@ -152,5 +152,15 @@ func parseTemplates(fsys fs.FS) (templates, error) {
 
 	t["partials"] = partials
 
+	// Standalone pages — parsed without the layout so they render as complete documents.
+	for _, name := range []string{"login"} {
+		parsed, parseErr := template.ParseFS(fsys, "templates/"+name+".html")
+		if parseErr != nil {
+			return nil, fmt.Errorf("parse standalone %s: %w", name, parseErr)
+		}
+
+		t[name] = parsed
+	}
+
 	return t, nil
 }

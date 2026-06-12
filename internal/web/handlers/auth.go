@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
 	"io"
 	"net/http"
 	"net/url"
@@ -28,46 +27,22 @@ const (
 
 // AuthConfig holds Supabase OAuth configuration.
 type AuthConfig struct {
-	SupabaseURL     string
-	SupabaseAnonKey string
-	JWTSecret       string
-	AppURL          string
+	SupabaseURL            string
+	SupabasePublishableKey string
+	AppURL                 string
+	Validator              *auth.Validator
 }
 
 func (a AuthConfig) secureCookies() bool {
 	return strings.HasPrefix(a.AppURL, "https://")
 }
 
-var loginTmpl = template.Must(template.New("login").Parse(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Budget — Sign in</title>
-  <link rel="icon" href="/static/favicon.ico" sizes="any">
-  <link rel="stylesheet" href="/static/css/style.css">
-  <script src="/static/js/theme.js"></script>
-</head>
-<body>
-  <main class="main login-page">
-    <div class="login-card">
-      <h1 class="login-title">Budget</h1>
-      {{if .Error}}<p class="login-error">Authentication failed. Please try again.</p>{{end}}
-      <div class="login-actions">
-        <a href="/auth/login?provider=google" class="btn btn-oauth">Sign in with Google</a>
-        <a href="/auth/login?provider=github" class="btn btn-oauth">Sign in with GitHub</a>
-      </div>
-    </div>
-  </main>
-</body>
-</html>`))
-
 // LoginPage renders the OAuth login page.
-func (*Handler) LoginPage(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) LoginPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	data := struct{ Error bool }{Error: r.URL.Query().Get("error") != ""}
-	if err := loginTmpl.Execute(w, data); err != nil {
+	if err := h.tmpl["login"].Execute(w, data); err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }
@@ -134,7 +109,7 @@ func (h *Handler) OAuthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate before storing.
-	if _, err := auth.ValidateToken(accessToken, h.authCfg.JWTSecret); err != nil {
+	if _, err := h.authCfg.Validator.ValidateToken(r.Context(), accessToken); err != nil {
 		http.Redirect(w, r, "/login?error=1", http.StatusFound)
 		return
 	}
@@ -179,7 +154,7 @@ func (h *Handler) exchangeCode(ctx context.Context, code, verifier string) (stri
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("apikey", h.authCfg.SupabaseAnonKey)
+	req.Header.Set("apikey", h.authCfg.SupabasePublishableKey)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

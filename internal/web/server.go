@@ -57,7 +57,7 @@ func NewServer(svc *service.Service, cfg ServerConfig) (*chi.Mux, error) {
 
 	// Protected routes — require a valid session.
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.RequireAuth(cfg.Auth.JWTSecret))
+		r.Use(middleware.RequireAuth(cfg.Auth.Validator))
 
 		// Pages.
 		r.Get("/", h.Dashboard)

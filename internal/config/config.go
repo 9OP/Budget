@@ -14,11 +14,8 @@ var ErrMissingDatabaseURL = errors.New("DATABASE_URL environment variable is req
 // ErrMissingSupabaseURL is returned when SUPABASE_URL env var is not set.
 var ErrMissingSupabaseURL = errors.New("SUPABASE_URL environment variable is required")
 
-// ErrMissingSupabaseAnonKey is returned when SUPABASE_ANON_KEY env var is not set.
-var ErrMissingSupabaseAnonKey = errors.New("SUPABASE_ANON_KEY environment variable is required")
-
-// ErrMissingJWTSecret is returned when SUPABASE_JWT_SECRET env var is not set.
-var ErrMissingJWTSecret = errors.New("SUPABASE_JWT_SECRET environment variable is required")
+// ErrMissingSupabasePublishableKey is returned when SUPABASE_PUBLISHABLE_KEY env var is not set.
+var ErrMissingSupabasePublishableKey = errors.New("SUPABASE_PUBLISHABLE_KEY environment variable is required")
 
 // ErrMissingAppURL is returned when APP_URL env var is not set.
 var ErrMissingAppURL = errors.New("APP_URL environment variable is required")
@@ -27,12 +24,11 @@ const defaultPort = "8080"
 
 // Config holds application configuration loaded from environment variables.
 type Config struct {
-	Port            string
-	DatabaseURL     string
-	SupabaseURL     string
-	SupabaseAnonKey string
-	JWTSecret       string
-	AppURL          string
+	Port                   string
+	DatabaseURL            string
+	SupabaseURL            string
+	SupabasePublishableKey string
+	AppURL                 string
 }
 
 // Load reads configuration from environment variables and returns a Config.
@@ -51,14 +47,9 @@ func Load() (Config, error) {
 		return Config{}, ErrMissingSupabaseURL
 	}
 
-	supabaseAnonKey := os.Getenv("SUPABASE_ANON_KEY")
-	if supabaseAnonKey == "" {
-		return Config{}, ErrMissingSupabaseAnonKey
-	}
-
-	jwtSecret := os.Getenv("SUPABASE_JWT_SECRET")
-	if jwtSecret == "" {
-		return Config{}, ErrMissingJWTSecret
+	publishableKey := os.Getenv("SUPABASE_PUBLISHABLE_KEY")
+	if publishableKey == "" {
+		return Config{}, ErrMissingSupabasePublishableKey
 	}
 
 	appURL := os.Getenv("APP_URL")
@@ -72,11 +63,10 @@ func Load() (Config, error) {
 	}
 
 	return Config{
-		Port:            port,
-		DatabaseURL:     databaseURL,
-		SupabaseURL:     supabaseURL,
-		SupabaseAnonKey: supabaseAnonKey,
-		JWTSecret:       jwtSecret,
-		AppURL:          appURL,
+		Port:                   port,
+		DatabaseURL:            databaseURL,
+		SupabaseURL:            supabaseURL,
+		SupabasePublishableKey: publishableKey,
+		AppURL:                 appURL,
 	}, nil
 }

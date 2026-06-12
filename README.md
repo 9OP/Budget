@@ -4,14 +4,13 @@
 
 Required env vars:
 
-| Var                   | Description                                           |
-| --------------------- | ----------------------------------------------------- |
-| `DATABASE_URL`        | Postgres connection string (Supabase)                 |
-| `SUPABASE_URL`        | Supabase project URL (e.g. `https://xxx.supabase.co`) |
-| `SUPABASE_ANON_KEY`   | Supabase public anon key                              |
-| `SUPABASE_JWT_SECRET` | JWT secret — Supabase dashboard → Settings → API      |
-| `APP_URL`             | Public app URL (e.g. `http://localhost:8080`)         |
-| `PORT`                | HTTP port (default: `8080`)                           |
+| Var                        | Description                                                |
+| -------------------------- | ---------------------------------------------------------- |
+| `DATABASE_URL`             | Postgres connection string (Supabase)                      |
+| `SUPABASE_URL`             | Supabase project URL (e.g. `https://xxx.supabase.co`)      |
+| `SUPABASE_PUBLISHABLE_KEY` | Publishable key — Supabase dashboard → Settings → API Keys |
+| `APP_URL`                  | Public app URL (e.g. `http://localhost:8080`)              |
+| `PORT`                     | HTTP port (default: `8080`)                                |
 
 ## Commands
 

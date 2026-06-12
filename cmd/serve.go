@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/9op/budget/internal/auth"
 	"github.com/9op/budget/internal/config"
 	"github.com/9op/budget/internal/service"
 	"github.com/9op/budget/internal/store/postgres"
@@ -44,15 +45,22 @@ func runServer(ctx context.Context) error {
 		return fmt.Errorf("ping database: %w", pingErr)
 	}
 
+	jwksURL := cfg.SupabaseURL + "/auth/v1/.well-known/jwks.json"
+
+	validator, err := auth.NewValidator(ctx, jwksURL)
+	if err != nil {
+		return fmt.Errorf("create jwt validator: %w", err)
+	}
+
 	repo := postgres.NewRepository(pool)
 	svc := service.NewService(repo)
 
 	handler, err := web.NewServer(svc, web.ServerConfig{
 		Auth: handlers.AuthConfig{
-			SupabaseURL:     cfg.SupabaseURL,
-			SupabaseAnonKey: cfg.SupabaseAnonKey,
-			JWTSecret:       cfg.JWTSecret,
-			AppURL:          cfg.AppURL,
+			SupabaseURL:            cfg.SupabaseURL,
+			SupabasePublishableKey: cfg.SupabasePublishableKey,
+			AppURL:                 cfg.AppURL,
+			Validator:              validator,
 		},
 	})
 	if err != nil {
