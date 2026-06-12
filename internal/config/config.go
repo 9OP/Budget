@@ -4,7 +4,6 @@ package config
 import (
 	"errors"
 	"os"
-	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -14,13 +13,10 @@ var ErrMissingDatabaseURL = errors.New("DATABASE_URL environment variable is req
 
 const defaultPort = "8080"
 
-const defaultCacheTTL = 5 * time.Minute
-
 // Config holds application configuration loaded from environment variables.
 type Config struct {
 	Port        string
 	DatabaseURL string
-	CacheTTL    time.Duration
 }
 
 // Load reads configuration from environment variables and returns a Config.
@@ -39,16 +35,8 @@ func Load() (Config, error) {
 		port = defaultPort
 	}
 
-	cacheTTL := defaultCacheTTL
-	if raw := os.Getenv("CACHE_TTL"); raw != "" {
-		if d, err := time.ParseDuration(raw); err == nil {
-			cacheTTL = d
-		}
-	}
-
 	return Config{
 		Port:        port,
 		DatabaseURL: databaseURL,
-		CacheTTL:    cacheTTL,
 	}, nil
 }

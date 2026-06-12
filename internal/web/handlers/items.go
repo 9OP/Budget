@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -232,8 +231,10 @@ func (h *Handler) ItemRowPartial(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateItemPartial(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
+	r.Body = http.MaxBytesReader(w, r.Body, maxFormBodySize)
+
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, fmt.Sprintf("parse form: %s", err.Error()), http.StatusBadRequest)
+		http.Error(w, "parse form: "+err.Error(), http.StatusBadRequest)
 
 		return
 	}
@@ -278,8 +279,10 @@ func (h *Handler) UpdateItemPartial(w http.ResponseWriter, r *http.Request) {
 
 // CreateItemPartial handles an HTMX form submission to create an item and returns the item row partial.
 func (h *Handler) CreateItemPartial(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxFormBodySize)
+
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, fmt.Sprintf("parse form: %s", err.Error()), http.StatusBadRequest)
+		http.Error(w, "parse form: "+err.Error(), http.StatusBadRequest)
 
 		return
 	}

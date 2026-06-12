@@ -49,7 +49,7 @@ func newRootCmd() *cobra.Command {
 	root.SilenceErrors = true
 	root.SilenceUsage = true
 
-	wrapsWithRecover(root) //nolint:contextcheck
+	wrapsWithRecover(root)
 
 	return root
 }

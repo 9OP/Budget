@@ -112,7 +112,11 @@ func (r *Repository) ListItems(ctx context.Context, filter domain.ItemFilter) ([
 
 	if filter.Month != nil {
 		args = append(args, filter.Month.Year(), int(filter.Month.Month()))
-		query += fmt.Sprintf(" AND EXTRACT(YEAR FROM i.date)=$%d AND EXTRACT(MONTH FROM i.date)=$%d", len(args)-1, len(args))
+		query += fmt.Sprintf(
+			" AND EXTRACT(YEAR FROM i.date)=$%d AND EXTRACT(MONTH FROM i.date)=$%d",
+			len(args)-1,
+			len(args),
+		)
 	} else {
 		if filter.From != nil {
 			args = append(args, *filter.From)
@@ -159,7 +163,11 @@ func (r *Repository) ListItems(ctx context.Context, filter domain.ItemFilter) ([
 		items = append(items, item)
 	}
 
-	return items, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate item rows: %w", err)
+	}
+
+	return items, nil
 }
 
 // --- Categories ---
@@ -202,7 +210,11 @@ func (r *Repository) ListCategories(ctx context.Context) ([]domain.Category, err
 		cats = append(cats, cat)
 	}
 
-	return cats, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate category rows: %w", err)
+	}
+
+	return cats, nil
 }
 
 // RenameCategory updates the category name. Because items and budgets reference
@@ -292,7 +304,11 @@ func (r *Repository) ListBudgets(ctx context.Context, filter domain.BudgetFilter
 		budgets = append(budgets, b)
 	}
 
-	return budgets, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate budget rows: %w", err)
+	}
+
+	return budgets, nil
 }
 
 // DeleteBudget removes the budget for (category, month).
@@ -363,4 +379,3 @@ func (r *Repository) categoryIDByName(ctx context.Context, name string) (string,
 
 	return id, nil
 }
-

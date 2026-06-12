@@ -1,8 +1,9 @@
 package service
 
 import (
+	"cmp"
 	"context"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -70,6 +71,8 @@ func computeDashboardSummary(items []domain.Item, budgets []domain.Budget) Dashb
 		case domain.Expense:
 			totalExpense += item.Amount
 			expByCat[item.Category] += item.Amount
+		default:
+			// unknown type; skip
 		}
 	}
 
@@ -99,7 +102,7 @@ func computeDashboardSummary(items []domain.Item, budgets []domain.Budget) Dashb
 		status := "ok"
 		if pct >= percentFactor {
 			status = "over"
-		} else if pct >= warningThreshold { //nolint:mnd // warningThreshold constant used above
+		} else if pct >= warningThreshold {
 			status = "warning"
 		}
 
@@ -113,8 +116,8 @@ func computeDashboardSummary(items []domain.Item, budgets []domain.Budget) Dashb
 		})
 	}
 
-	sort.Slice(budgetRows, func(i, j int) bool {
-		return budgetRows[i].Percent > budgetRows[j].Percent
+	slices.SortFunc(budgetRows, func(a, b BudgetConsumption) int {
+		return cmp.Compare(b.Percent, a.Percent) // descending
 	})
 
 	return DashboardSummary{
@@ -134,8 +137,8 @@ func buildCategoryTotals(byCat map[string]float64, total float64) []CategoryTota
 		cats = append(cats, CategoryTotal{Name: name, Amount: amount})
 	}
 
-	sort.Slice(cats, func(i, j int) bool {
-		return cats[i].Amount > cats[j].Amount
+	slices.SortFunc(cats, func(a, b CategoryTotal) int {
+		return cmp.Compare(b.Amount, a.Amount) // descending
 	})
 
 	for i := range cats {

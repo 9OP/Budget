@@ -28,7 +28,7 @@ func (h *Handler) CategoriesPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // CatFormPartial renders the category creation form partial.
-func (h *Handler) CatFormPartial(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CatFormPartial(w http.ResponseWriter, _ *http.Request) {
 	h.renderPartial(w, "category_form", nil)
 }
 
@@ -69,6 +69,8 @@ func (h *Handler) CategoryRowPartial(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) RenameCategoryPartial(w http.ResponseWriter, r *http.Request) {
 	oldName := chi.URLParam(r, "name")
 
+	r.Body = http.MaxBytesReader(w, r.Body, maxFormBodySize)
+
 	if err := r.ParseForm(); err != nil {
 		setToast(w, "invalid form data", "error")
 		http.Error(w, "invalid form data", http.StatusBadRequest)
@@ -100,6 +102,8 @@ func (h *Handler) RenameCategoryPartial(w http.ResponseWriter, r *http.Request) 
 
 // CreateCategoryPartial handles an HTMX form submission to create a category and returns the category item partial.
 func (h *Handler) CreateCategoryPartial(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxFormBodySize)
+
 	if err := r.ParseForm(); err != nil {
 		setToast(w, "invalid form data", "error")
 		http.Error(w, "invalid form data", http.StatusBadRequest)

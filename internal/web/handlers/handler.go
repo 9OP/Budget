@@ -1,3 +1,4 @@
+// Package handlers contains the HTTP page and HTMX partial handlers for the budget web UI.
 package handlers
 
 import (
@@ -20,6 +21,7 @@ const (
 	monthLabelLayout = "January 2006"
 	prevMonthOffset  = -1
 	nextMonthOffset  = 1
+	maxFormBodySize  = 1 << 20 // 1 MB — applied via http.MaxBytesReader before ParseForm
 )
 
 // Handler holds dependencies for page and partial handlers.
@@ -48,7 +50,7 @@ func (h *Handler) renderPage(w http.ResponseWriter, name string, data any) {
 	}
 }
 
-func (h *Handler) enrich(name string, data any) any {
+func (*Handler) enrich(name string, data any) any {
 	m := map[string]any{
 		"ActivePage": name,
 	}
@@ -59,9 +61,10 @@ func (h *Handler) enrich(name string, data any) any {
 	}
 
 	t := v.Type()
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		m[t.Field(i).Name] = v.Field(i).Interface()
 	}
+
 	return m
 }
 
@@ -70,23 +73,26 @@ func (h *Handler) renderPartial(w http.ResponseWriter, name string, data any) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	if err := h.tmpl["partials"].ExecuteTemplate(w, name, data); err != nil {
+		//nolint:gosec // name is an internal template identifier, not user input
 		slog.Error("render partial", slog.String("name", name), slog.String("error", err.Error()))
 	}
+}
+
+// toastContent holds the message and kind for a client-side toast notification.
+type toastContent struct {
+	Message string `json:"message"`
+	Type    string `json:"type"`
+}
+
+// toastPayload is the HX-Trigger JSON payload that fires a "toast" event on the client.
+type toastPayload struct {
+	Toast toastContent `json:"toast"`
 }
 
 // setToast sets the HX-Trigger header to fire a "toast" event on the client.
 // kind should be "success" or "error".
 func setToast(w http.ResponseWriter, message, kind string) {
-	type payload struct {
-		Toast struct {
-			Message string `json:"message"`
-			Type    string `json:"type"`
-		} `json:"toast"`
-	}
-
-	var p payload
-	p.Toast.Message = message
-	p.Toast.Type = kind
+	p := toastPayload{Toast: toastContent{Message: message, Type: kind}}
 
 	b, err := json.Marshal(p)
 	if err != nil {
@@ -97,7 +103,12 @@ func setToast(w http.ResponseWriter, message, kind string) {
 }
 
 func parseMonthParam(s string) (time.Time, error) {
-	return time.Parse(monthLayout, s)
+	t, err := time.Parse(monthLayout, s)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("parse month %q: %w", s, err)
+	}
+
+	return t, nil
 }
 
 // templates maps template names to their parsed template sets.
@@ -124,12 +135,13 @@ func parseTemplates(fsys fs.FS) (templates, error) {
 		}
 
 		name := strings.TrimSuffix(filepath.Base(path), ".html")
-		tmpl, err := template.ParseFS(fsys, append([]string{layout, path}, partialPaths...)...)
-		if err != nil {
-			return nil, fmt.Errorf("parse page %s: %w", name, err)
+
+		parsed, parseErr := template.ParseFS(fsys, append([]string{layout, path}, partialPaths...)...)
+		if parseErr != nil {
+			return nil, fmt.Errorf("parse page %s: %w", name, parseErr)
 		}
 
-		t[name] = tmpl
+		t[name] = parsed
 	}
 
 	partials, err := template.ParseFS(fsys, partialPaths...)

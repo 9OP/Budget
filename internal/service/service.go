@@ -2,8 +2,9 @@
 package service
 
 import (
+	"cmp"
 	"context"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -119,8 +120,8 @@ func (s *Service) ListItems(ctx context.Context, filter domain.ItemFilter) ([]do
 		return nil, err
 	}
 
-	sort.Slice(items, func(i, j int) bool {
-		return items[i].Date.After(items[j].Date)
+	slices.SortFunc(items, func(a, b domain.Item) int {
+		return cmp.Compare(b.Date.Unix(), a.Date.Unix()) // descending
 	})
 
 	return items, nil

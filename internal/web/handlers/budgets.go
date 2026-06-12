@@ -101,7 +101,9 @@ func (h *Handler) SetBudgetPartial(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := r.ParseForm(); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, maxFormBodySize)
+
+	if parseErr := r.ParseForm(); parseErr != nil {
 		http.Error(w, "invalid form data", http.StatusBadRequest)
 
 		return
