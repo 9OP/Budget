@@ -1,0 +1,28 @@
+{{define "content"}}
+<div class="page-header">
+  <div class="month-nav">
+    <a href="/budgets?month={{.PrevMonth}}" class="btn btn-outline">&#8249;</a>
+    <span class="month-label">{{.MonthLabel}}</span>
+    <a href="/budgets?month={{.NextMonth}}" class="btn btn-outline">&#8250;</a>
+  </div>
+</div>
+
+<div class="table-wrapper">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>Monthly Budget</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Rows}}{{template "budget_row" .}}{{end}}
+    </tbody>
+  </table>
+  {{if not .Rows}}
+  <p class="empty-state">No categories yet. <a href="/categories">Add some categories</a> first.</p>
+  {{end}}
+</div>
+{{end}}

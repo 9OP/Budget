@@ -1,0 +1,33 @@
+{{define "item_edit_form"}}
+<tr>
+  <td><input type="date" name="date" value="{{.Item.Date}}" required></td>
+  <td><input type="text" name="name" value="{{.Item.Name}}" required style="width:100%"></td>
+  <td>
+    <select name="type">
+      <option value="EXPENSE" {{if eq .Item.Type "EXPENSE"}}selected{{end}}>Expense</option>
+      <option value="INCOME"  {{if eq .Item.Type "INCOME"}}selected{{end}}>Income</option>
+    </select>
+  </td>
+  <td>
+    <select name="category">
+      {{range .Categories}}
+      <option value="{{.Name}}" {{if eq $.Item.Category .Name}}selected{{end}}>{{.Name}}</option>
+      {{end}}
+    </select>
+  </td>
+  <td><input type="number" name="amount" value="{{printf "%.2f" .Item.Amount}}" step="0.01" min="0" required style="width:90px"></td>
+  <td>
+    <button class="btn btn-primary btn-icon"
+            hx-put="/api/items/{{.Item.ID}}"
+            hx-include="closest tr"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
+            title="Save">&#10003;</button>
+    <button class="btn btn-outline btn-icon"
+            hx-get="/partials/item-row/{{.Item.ID}}"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
+            title="Cancel">&#10005;</button>
+  </td>
+</tr>
+{{end}}

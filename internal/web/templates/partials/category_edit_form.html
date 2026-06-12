@@ -1,0 +1,18 @@
+{{define "category_edit_form"}}
+<li id="category-{{.Name}}" class="category-item">
+  <input type="text" name="name" value="{{.Name}}" required style="flex:1">
+  <div class="category-item-actions">
+    <button class="btn btn-primary btn-icon"
+            hx-put="/api/categories/{{.Name}}"
+            hx-include="closest li"
+            hx-target="closest li"
+            hx-swap="outerHTML"
+            title="Save">&#10003;</button>
+    <button class="btn btn-outline btn-icon"
+            hx-get="/partials/category-row/{{.Name}}"
+            hx-target="closest li"
+            hx-swap="outerHTML"
+            title="Cancel">&#10005;</button>
+  </div>
+</li>
+{{end}}

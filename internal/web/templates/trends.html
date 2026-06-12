@@ -1,0 +1,19 @@
+{{define "content"}}
+<div class="page-header">
+  <h2>Trends</h2>
+  <div style="display:flex;gap:4px">
+    <button id="btn-monthly"    class="btn btn-primary" onclick="setTrendsView('monthly')">Monthly</button>
+    <button id="btn-cumulative" class="btn btn-outline" onclick="setTrendsView('cumulative')">Cumulative</button>
+  </div>
+</div>
+
+{{if .HasData}}
+<div class="chart-card" style="padding:24px">
+  <canvas id="trends-chart"></canvas>
+</div>
+<script src="/static/js/trends.js"></script>
+<script>initTrends({{.ChartJSON}});</script>
+{{else}}
+<p class="empty-state">No items recorded yet.</p>
+{{end}}
+{{end}}

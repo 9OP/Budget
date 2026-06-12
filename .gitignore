@@ -1,0 +1,22 @@
+# Credentials — never commit
+service-account.json
+*.json.key
+
+# Environment
+.env
+.env.local
+
+# Build artifacts
+budget
+dist/
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

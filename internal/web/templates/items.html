@@ -1,0 +1,57 @@
+{{define "content"}}
+<div class="page-header">
+  <div class="month-nav">
+    <a href="/items?month={{.PrevMonth}}{{if .Search}}&search={{.Search}}{{end}}{{if .ItemType}}&type={{.ItemType}}{{end}}{{if .Category}}&category={{.Category}}{{end}}" class="btn btn-outline">&#8249;</a>
+    <span class="month-label">{{.MonthLabel}}</span>
+    <a href="/items?month={{.NextMonth}}{{if .Search}}&search={{.Search}}{{end}}{{if .ItemType}}&type={{.ItemType}}{{end}}{{if .Category}}&category={{.Category}}{{end}}" class="btn btn-outline">&#8250;</a>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form hx-get="/items"
+        hx-target="#items-section"
+        hx-select="#items-section"
+        hx-swap="outerHTML"
+        hx-push-url="true"
+        hx-trigger="change, input delay:300ms">
+    <input type="hidden" name="month" value="{{.Month}}">
+    <input type="text" name="search" value="{{.Search}}" placeholder="Search by name…" style="min-width:180px">
+    <select name="type">
+      <option value="" {{if eq .ItemType ""}}selected{{end}}>All types</option>
+      <option value="EXPENSE" {{if eq .ItemType "EXPENSE"}}selected{{end}}>Expense</option>
+      <option value="INCOME"  {{if eq .ItemType "INCOME"}}selected{{end}}>Income</option>
+    </select>
+    <select name="category">
+      <option value="" {{if eq .Category ""}}selected{{end}}>All categories</option>
+      {{range .Categories}}
+      <option value="{{.Name}}" {{if eq $.Category .Name}}selected{{end}}>{{.Name}}</option>
+      {{end}}
+    </select>
+  </form>
+</div>
+
+<div id="form-slot">
+   {{template "item_form" .ItemFormData}}
+</div>
+
+<div id="items-section">
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="items-tbody">
+        {{range .Items}}{{template "item_row" .}}{{end}}
+      </tbody>
+    </table>
+    {{if not .Items}}<p class="empty-state">No items found.</p>{{end}}
+  </div>
+</div>
+{{end}}

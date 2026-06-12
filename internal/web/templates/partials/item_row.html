@@ -1,0 +1,27 @@
+{{define "item_row"}}
+<tr>
+  <td>{{.Date}}</td>
+  <td>{{.Name}}</td>
+  <td class="{{if eq .Type "EXPENSE"}}type-expense{{else}}type-income{{end}}">{{if eq .Type "EXPENSE"}}Expense{{else}}Income{{end}}</td>
+  <td>{{.Category}}</td>
+  <td class="amount">{{printf "%.2f" .Amount}}</td>
+  <td>
+    <button class="btn btn-outline btn-icon"
+            hx-get="/partials/item-edit/{{.ID}}"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
+            title="Edit">&#9998;</button>
+    <button class="btn btn-outline btn-icon"
+            hx-get="/partials/item-form/{{.ID}}"
+            hx-target="#form-slot"
+            hx-swap="innerHTML"
+            title="Duplicate">&#10064;</button>
+    <button class="btn btn-danger btn-icon"
+            hx-delete="/api/items/{{.ID}}"
+            hx-target="closest tr"
+            hx-swap="delete"
+            hx-confirm="Delete this item?"
+            title="Delete">&#10005;</button>
+  </td>
+</tr>
+{{end}}

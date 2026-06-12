@@ -1,0 +1,20 @@
+{{define "content"}}
+<div class="page-header">
+  <h2>Categories</h2>
+</div>
+
+<div class="categories-layout">
+  <ul id="categories-list" class="category-list">
+    {{range .Categories}}
+    {{template "category_item" .}}
+    {{else}}
+    <li class="category-item empty-state">No categories yet.</li>
+    {{end}}
+  </ul>
+
+  <div class="category-form-card">
+    <h3>Add Category</h3>
+    {{template "category_form" .}}
+  </div>
+</div>
+{{end}}

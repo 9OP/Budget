@@ -1,0 +1,280 @@
+version: "2"
+issues:
+  max-same-issues: 50
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines
+  settings:
+    golines:
+      max-len: 120
+      shorten-comments: true
+      reformat-tags: false
+      chain-split-dots: false
+linters:
+  default: none
+  enable:
+    # --- Bug / correctness ---
+    - asasalint        # pass []any as any in variadic
+    - bidichk          # dangerous unicode sequences
+    - bodyclose        # HTTP response body closed
+    - canonicalheader  # canonical net/http header keys
+    - contextcheck     # non-inherited context
+    - copyloopvar      # loop variable copy
+    - durationcheck    # two durations multiplied
+    - errcheck         # unchecked errors
+    - errchkjson       # types passed to json encoding
+    - errorlint        # error wrapping scheme (Go 1.13+)
+    - exhaustive       # exhaustive enum switches
+    - exptostd         # x/exp → stdlib replacements
+    - fatcontext       # nested contexts in loops
+    - gosec            # security problems
+    - govet            # suspicious constructs
+    - makezero         # slice declarations with non-zero length
+    - musttag          # enforce tags in (un)marshaled structs
+    - nilerr           # nil return when err != nil
+    - nilnesserr       # err != nil check returns different nil error
+    - noctx            # missing context.Context
+    - protogetter      # proto field reads via getters
+    - reassign         # package variable reassignment
+    - rowserrcheck     # Rows.Err checked
+    - spancheck        # OpenTelemetry span mistakes
+    - sqlclosecheck    # sql.Rows/Stmt closed
+    - staticcheck      # comprehensive static analysis
+    - unconvert        # unnecessary type conversions
+    - unused           # unused code
+    - wastedassign     # wasted assignments
+    - unqueryvet       # SQL-specific; no SQL in this package
+
+    # --- Error handling (strict) ---
+    - err113           # enforce error wrapping (no raw errors)
+    - wrapcheck        # errors from external packages must be wrapped
+
+    # --- Style / consistency ---
+    - asciicheck       # non-ASCII in identifiers
+    - containedctx     # context.Context in structs
+    - decorder         # declaration order
+    - dogsled          # too many blank identifiers
+    - dupword          # duplicate words in source
+    - embeddedstructfieldcheck # embedded types at top of struct
+    - errname          # sentinel error / error type naming
+    - forcetypeassert  # unchecked type assertions
+    - funcorder        # order of functions/methods
+    - gochecknoinits   # no init functions
+    - gocheckcompilerdirectives # valid //go: directives
+    - gochecksumtype   # exhaustive sum types
+    - goconst          # repeated strings → constants
+    - gocritic         # bugs, perf, style
+    - godot            # comments end in a period.
+    - godox            # flag TODO/FIXME/BUG
+    - goprintffuncname # printf-like func named with -f
+    - gosmopolitan     # i18n anti-patterns
+    - grouper          # expression group analysis
+    - iface            # interface misuse / pollution
+    - importas         # consistent import aliases
+    - inamedparam      # unnamed interface method params
+    - ineffassign      # ineffectual assignments
+    - interfacebloat   # too many methods in interface
+    - intrange         # integer range in for loops
+    - iotamixing       # iota mixed with non-iota in const
+    - mirror           # wrong bytes/strings mirror patterns
+    - misspell         # commonly misspelled English words
+    - nakedret         # naked returns in long functions
+    - nestif           # deeply nested ifs
+    - nilnil           # simultaneous nil error + invalid value
+    - nolintlint       # ill-formed nolint directives
+    - nonamedreturns   # no named returns
+    - nosprintfhostport # Sprintf misuse for host:port
+    - perfsprint       # faster alternatives to fmt.Sprintf
+    - predeclared      # shadowing predeclared identifiers
+    - promlinter       # Prometheus metric naming
+    - recvcheck        # receiver type consistency
+    - revive           # configurable meta-linter
+    - sloglint         # consistent slog usage
+    - tagalign         # struct tag alignment
+    - tagliatelle      # struct tag casing
+    - usestdlibvars    # stdlib vars/constants
+    - whitespace       # unnecessary newlines
+    # - nlreturn         # forces blank lines before every return
+    # - varnamelen       # Go convention uses short names
+    # - wsl_v5           # very opinionated blank-line rules
+
+    # --- Complexity ---
+    - cyclop           # cyclomatic complexity (package-level)
+    - gocyclo          # cyclomatic complexity (function-level)
+    - gocognit         # cognitive complexity
+    - maintidx         # maintainability index
+
+    # --- Performance ---
+    - prealloc         # slice pre-allocation
+
+    # --- Testing ---
+    - testableexamples # testable examples
+    - testifylint      # testify usage
+    - testpackage      # separate _test package
+    - thelper          # test helpers call t.Helper()
+    - tparallel        # t.Parallel() usage
+    - paralleltest     # missing t.Parallel()
+    - usetesting       # testing package usage
+
+    # --- Lines ---
+    - lll              # long lines
+    - loggercheck      # logger key-value pairs
+
+    # --- Module ---
+    # gomoddirectives  — monorepo root go.mod has replacements we don't control
+    - goheader         # file header pattern
+
+    # --- Misc ---
+    - depguard         # import allow/blocklist
+    - modernize        # suggest modern Go idioms
+    - zerologlint      # zerolog dispatch check
+    - ireturn          # return concrete types, not interfaces
+    - dupl             # duplicate code fragments
+    - mnd              # magic number detection
+    - unparam          # unused function parameters
+
+  settings:
+    cyclop:
+      max-complexity: 25
+    depguard:
+      rules:
+        no-unsafe:
+          deny:
+            - pkg: unsafe
+              desc: "unsafe is forbidden in this package"
+    dogsled:
+      max-blank-identifiers: 2
+    dupl:
+      threshold: 150
+    errcheck:
+      check-type-assertions: true
+      check-blank: false
+    exhaustive:
+      check:
+        - switch
+        - map
+      default-signifies-exhaustive: true
+    gocognit:
+      min-complexity: 30
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+        - experimental
+        - opinionated
+      disabled-checks:
+        - unnamedResult
+        - hugeParam # value semantics are intentional for domain boundary types
+    godot:
+      scope: declarations
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment # noisy micro-optimization; not worth enforcing
+    interfacebloat:
+      max: 10
+    ireturn:
+      allow:
+        - anon
+        - error
+        - empty
+        - stdlib
+        - generic
+    mnd:
+      ignored-numbers:
+        - '0'
+        - '1'
+        - '2'
+        - '10'
+      ignored-functions:
+        - strconv.ParseInt
+        - strconv.ParseUint
+        - strconv.FormatInt
+        - strconv.FormatUint
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+    prealloc:
+      simple: true
+      range-loops: true
+      for-loops: false
+    revive:
+      enable-all-rules: true
+      rules:
+        - name: line-length-limit
+          arguments: [120]
+        - name: add-constant
+          disabled: true # redundant with mnd; revive's version is noisier
+        - name: cognitive-complexity
+          arguments: [30]
+        - name: cyclomatic
+          arguments: [25]
+        - name: function-length
+          arguments: [0, 140] # statements, lines
+        - name: function-result-limit
+          arguments: [4]
+        - name: unchecked-type-assertion
+          exclude:
+            - "**/*_test.go"
+        - name: unused-parameter
+          exclude:
+            - "**/*_test.go"
+        - name: package-naming
+          disabled: true # "runtime" clashes with stdlib but is the correct domain name
+        - name: package-directory-mismatch
+          disabled: false
+    staticcheck:
+      checks:
+        - all
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+          yaml: snake
+    testpackage:
+      skip-regexp: internal_test\.go
+    wrapcheck:
+      ignore-package-globs:
+        - github.com/9op/budget/*
+
+  exclusions:
+    rules:
+      # Tests: relax noisy linters that add friction without safety value.
+      - path: _test\.go
+        linters:
+          - dupl
+          - err113
+          - errcheck
+          - forcetypeassert
+          - funlen
+          - goconst
+          - gocritic
+          - godot
+          - godox
+          - ireturn
+          - mnd
+          - nonamedreturns
+          - noctx
+          - paralleltest
+          - perfsprint
+          - prealloc
+          - testpackage
+          - tparallel
+          - unqueryvet
+          - wrapcheck
+      # cmd/server/ is the application entrypoint; relax strict linting.
+      - path: cmd/server/
+        linters:
+          - err113
+          - errcheck
+          - gocritic
+          - gosec
+          - mnd
+          - noctx
+          - revive
+          - wrapcheck

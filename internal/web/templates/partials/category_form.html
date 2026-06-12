@@ -1,0 +1,30 @@
+{{define "category_form"}}
+<form hx-post="/api/categories"
+      hx-target="#categories-list"
+      hx-swap="beforeend"
+      hx-on::after-request="if(event.detail.successful) this.reset()">
+  <div class="form-row">
+    <input type="text" name="name" placeholder="Category name" required style="flex:1">
+    <button type="submit" class="btn btn-primary">Add</button>
+  </div>
+</form>
+{{end}}
+
+{{define "category_item"}}
+<li id="category-{{.Name}}" class="category-item">
+  <span>{{.Name}}</span>
+  <div class="category-item-actions">
+    <button class="btn btn-outline btn-icon"
+            hx-get="/partials/category-edit/{{.Name}}"
+            hx-target="closest li"
+            hx-swap="outerHTML"
+            title="Rename">&#9998;</button>
+    <button class="btn btn-danger btn-icon"
+            hx-delete="/api/categories/{{.Name}}"
+            hx-target="closest li"
+            hx-swap="delete"
+            hx-confirm="Delete category &quot;{{.Name}}&quot;?"
+            title="Delete">&#10005;</button>
+  </div>
+</li>
+{{end}}

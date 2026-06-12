@@ -1,0 +1,35 @@
+{{define "budget_row"}}
+<tr>
+  <td><strong>{{.Category}}</strong></td>
+  <td>
+    <form hx-put="/api/budgets/{{.Month}}/{{.Category}}"
+          hx-target="closest tr"
+          hx-swap="outerHTML">
+      <div class="form-row">
+        <input type="number" name="amount" value="{{printf "%.2f" .Amount}}"
+               step="0.01" min="0" style="width:110px">
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </td>
+  <td>
+    {{if .Inherited}}
+      <span class="badge badge-inherited">&#8593; from {{.SourceMonth}}</span>
+    {{else if .HasBudget}}
+      <span class="badge badge-set">&#10003; set</span>
+    {{else}}
+      <span class="text-muted">not set</span>
+    {{end}}
+  </td>
+  <td>
+    {{if and .HasBudget (not .Inherited)}}
+    <button class="btn btn-danger btn-icon"
+            hx-delete="/api/budgets/{{.Month}}/{{.Category}}"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
+            hx-confirm="Delete budget for {{.Category}} ({{.Month}})?"
+            title="Delete budget">&#10005;</button>
+    {{end}}
+  </td>
+</tr>
+{{end}}

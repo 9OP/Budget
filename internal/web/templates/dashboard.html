@@ -1,0 +1,62 @@
+{{define "content"}}
+<div class="page-header">
+  <div class="month-nav">
+    <a href="/?month={{.PrevMonth}}" class="btn btn-outline">&#8249;</a>
+    <span class="month-label">{{.MonthLabel}}</span>
+    <a href="/?month={{.NextMonth}}" class="btn btn-outline">&#8250;</a>
+  </div>
+</div>
+
+<div class="summary-cards">
+  <div class="card card-income">
+    <div class="card-label">Income</div>
+    <div class="card-value">{{printf "%.2f" .TotalIncome}}</div>
+  </div>
+  <div class="card card-expense">
+    <div class="card-label">Expenses</div>
+    <div class="card-value">{{printf "%.2f" .TotalExpense}}</div>
+  </div>
+  <div class="card {{if lt .Net 0.0}}card-negative{{else}}card-net{{end}}">
+    <div class="card-label">Net</div>
+    <div class="card-value">{{printf "%.2f" .Net}}</div>
+  </div>
+</div>
+
+{{if .BudgetRows}}
+<p class="charts-section-label">Budget</p>
+<div class="budget-consumption">
+  {{range .BudgetRows}}
+  <div class="budget-row">
+    <div class="budget-row-header">
+      <span class="budget-row-category">{{.Category}}</span>
+      <span class="budget-row-amounts {{.Status}}">{{printf "%.2f" .Spent}} / {{printf "%.2f" .Budget}} &mdash; {{printf "%.0f" .Percent}}%</span>
+    </div>
+    <div class="budget-bar-track">
+      <div class="budget-bar-fill {{.Status}}" style="width:{{printf "%.2f" .BarWidth}}%"></div>
+    </div>
+  </div>
+  {{end}}
+</div>
+{{end}}
+
+{{if .ExpenseByCategory}}
+<script src="/static/js/charts.js"></script>
+<p class="charts-section-label">Expenses by Category</p>
+<div class="chart-card expense-chart-card">
+  <div class="expense-chart-canvas">
+    <canvas id="expense-doughnut" width="200" height="200"></canvas>
+  </div>
+  <table class="breakdown-table">
+    {{range .ExpenseByCategory}}
+    <tr>
+      <td><span class="color-dot" style="background:{{.Color}}"></span>{{.Name}}</td>
+      <td>{{printf "%.1f" .Percent}}% &mdash; {{printf "%.2f" .Amount}}</td>
+    </tr>
+    {{end}}
+  </table>
+</div>
+<script>initChart({{.ExpenseChartJSON}}, 'expense-doughnut');</script>
+{{else}}
+<p class="empty-state">No items recorded for {{.MonthLabel}}.</p>
+{{end}}
+{{end}}
