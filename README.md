@@ -25,6 +25,7 @@ make all         # fmt + lint + test + build
 ## Migrations
 
 ```bash
+./budget migrate create   # Create new migration file
 ./budget migrate up       # Apply pending migrations
 ./budget migrate down     # Roll back last migration
 ./budget migrate status   # Show migration status
