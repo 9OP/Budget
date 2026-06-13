@@ -24,9 +24,9 @@
   <nav class="nav">
     <a href="/" class="nav-brand">Budget</a>
     <div class="nav-links">
-      <a href="/"           class="nav-link{{if eq .ActivePage "dashboard"}} active{{end}}">Dashboard</a>
-      <a href="/items"      class="nav-link{{if eq .ActivePage "items"}}     active{{end}}">Items</a>
-      <a href="/budgets"    class="nav-link{{if eq .ActivePage "budgets"}}   active{{end}}">Budgets</a>
+      <a href="/{{if .Month}}?month={{.Month}}{{end}}"           class="nav-link{{if eq .ActivePage "dashboard"}} active{{end}}">Dashboard</a>
+      <a href="/items{{if .Month}}?month={{.Month}}{{end}}"      class="nav-link{{if eq .ActivePage "items"}}     active{{end}}">Items</a>
+      <a href="/budgets{{if .Month}}?month={{.Month}}{{end}}"    class="nav-link{{if eq .ActivePage "budgets"}}   active{{end}}">Budgets</a>
       <a href="/categories" class="nav-link{{if eq .ActivePage "categories"}} active{{end}}">Categories</a>
       <a href="/trends"     class="nav-link{{if eq .ActivePage "trends"}}    active{{end}}">Trends</a>
     </div>
