@@ -32,6 +32,9 @@ var ErrBudgetNotFound = errors.New("budget not found")
 // ErrUnauthenticated is returned when a repository call lacks a user ID in context.
 var ErrUnauthenticated = errors.New("unauthenticated")
 
+// ErrCategoryInUse is returned when deleting a category that still has items or budgets referencing it.
+var ErrCategoryInUse = errors.New("category still has items or budgets referencing it")
+
 // ErrCategoryLimitReached is returned when the user already has the maximum number of categories.
 var ErrCategoryLimitReached = errors.New("category limit reached (max 100)")
 

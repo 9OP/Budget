@@ -8,6 +8,12 @@
 
   <link rel="icon" href="/static/favicon.ico" sizes="any">
   <link rel="stylesheet" href="/static/css/style.css">
+  <script>
+    (function() {
+      var t = localStorage.getItem("theme") || "light";
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
   <script src="/static/js/theme.js"></script>
   <script src="/static/js/toast.js" defer></script>
 

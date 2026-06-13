@@ -14,7 +14,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const pgUniqueViolation = "23505"
+const (
+	pgUniqueViolation = "23505"
+	pgFKViolation     = "23503"
+)
 
 // Repository implements service.Repository backed by PostgreSQL.
 type Repository struct {
@@ -298,6 +301,11 @@ func (r *Repository) DeleteCategory(ctx context.Context, name string) error {
 		name, userID,
 	)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgFKViolation {
+			return domain.ErrCategoryInUse
+		}
+
 		return fmt.Errorf("delete category: %w", err)
 	}
 
