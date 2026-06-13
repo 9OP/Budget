@@ -23,6 +23,7 @@ func newMigrateCmd() *cobra.Command {
 		newMigrateSubCmd("down", "Roll back the last applied migration", goose.DownContext),
 		newMigrateSubCmd("status", "Show migration status", goose.StatusContext),
 		newMigrateSubCmd("version", "Show current migration version", goose.VersionContext),
+		newMigrateCreateCmd(),
 	)
 
 	return cmd
@@ -37,6 +38,19 @@ func newMigrateSubCmd(use, short string, fn gooseFunc) *cobra.Command {
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return withDB(func(db *sql.DB) error {
 				return fn(cmd.Context(), db, ".")
+			})
+		},
+	}
+}
+
+func newMigrateCreateCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "create <name>",
+		Short: "Create a new SQL migration file in internal/migrations/",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(_ *cobra.Command, args []string) error {
+			return withDB(func(db *sql.DB) error {
+				return goose.Create(db, "internal/migrations", args[0], "sql")
 			})
 		},
 	}

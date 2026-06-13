@@ -1,11 +1,26 @@
 {{define "content"}}
 <div class="page-header">
   <div class="month-nav">
-    <a href="/items?month={{.PrevMonth}}{{if .Search}}&search={{.Search}}{{end}}{{if .ItemType}}&type={{.ItemType}}{{end}}{{if .Category}}&category={{.Category}}{{end}}" class="btn btn-outline">&#8249;</a>
+    <button class="btn btn-outline" onclick="shiftMonth(-1)">&#8249;</button>
     <span class="month-label">{{.MonthLabel}}</span>
-    <a href="/items?month={{.NextMonth}}{{if .Search}}&search={{.Search}}{{end}}{{if .ItemType}}&type={{.ItemType}}{{end}}{{if .Category}}&category={{.Category}}{{end}}" class="btn btn-outline">&#8250;</a>
+    <button class="btn btn-outline" onclick="shiftMonth(1)">&#8250;</button>
+  </div>
+  <div id="items-totals" class="items-totals" hx-swap-oob="true">
+    {{if .TotalIncome}}<span class="type-income">Income: {{printf "%.2f" .TotalIncome}}</span>{{end}}
+    {{if .TotalExpense}}<span class="type-expense">Expenses: {{printf "%.2f" .TotalExpense}}</span>{{end}}
+    {{if .TotalInvestment}}<span class="type-investment">Investments: {{printf "%.2f" .TotalInvestment}}</span>{{end}}
   </div>
 </div>
+<script>
+  function shiftMonth(delta) {
+    var p = new URLSearchParams(window.location.search);
+    var cur = p.get('month') || '{{.Month}}';
+    var d = new Date(cur + '-02'); // day=2 avoids DST edge cases
+    d.setMonth(d.getMonth() + delta);
+    p.set('month', d.toISOString().slice(0, 7));
+    window.location.href = '/items?' + p.toString();
+  }
+</script>
 
 <div class="filter-bar">
   <form hx-get="/items"
@@ -18,8 +33,9 @@
     <input type="text" name="search" value="{{.Search}}" placeholder="Search by name…" style="min-width:180px">
     <select name="type">
       <option value="" {{if eq .ItemType ""}}selected{{end}}>All types</option>
-      <option value="EXPENSE" {{if eq .ItemType "EXPENSE"}}selected{{end}}>Expense</option>
-      <option value="INCOME"  {{if eq .ItemType "INCOME"}}selected{{end}}>Income</option>
+      <option value="EXPENSE"    {{if eq .ItemType "EXPENSE"}}selected{{end}}>Expense</option>
+      <option value="INCOME"     {{if eq .ItemType "INCOME"}}selected{{end}}>Income</option>
+      <option value="INVESTMENT" {{if eq .ItemType "INVESTMENT"}}selected{{end}}>Investment</option>
     </select>
     <select name="category">
       <option value="" {{if eq .Category ""}}selected{{end}}>All categories</option>

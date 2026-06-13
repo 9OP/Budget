@@ -44,16 +44,19 @@ type itemEditFormData struct {
 
 // ItemsData is passed to the items list template.
 type ItemsData struct {
-	Items        []itemView
-	Categories   []domain.Category
-	ItemFormData itemFormData
-	Month        string
-	MonthLabel   string
-	PrevMonth    string
-	NextMonth    string
-	Search       string
-	ItemType     string
-	Category     string
+	Items           []itemView
+	Categories      []domain.Category
+	ItemFormData    itemFormData
+	Month           string
+	MonthLabel      string
+	PrevMonth       string
+	NextMonth       string
+	Search          string
+	ItemType        string
+	Category        string
+	TotalExpense    float64
+	TotalIncome     float64
+	TotalInvestment float64
 }
 
 // ItemsPage renders the items list page.
@@ -98,22 +101,35 @@ func (h *Handler) ItemsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var totalExpense, totalIncome, totalInvestment float64
+
 	views := make([]itemView, 0, len(items))
 	for _, item := range items {
+		switch item.Type {
+		case domain.Expense:
+			totalExpense += item.Amount
+		case domain.Income:
+			totalIncome += item.Amount
+		case domain.Investment:
+			totalInvestment += item.Amount
+		}
 		views = append(views, toItemView(item))
 	}
 
 	h.renderPage(w, r, "items", &ItemsData{
-		Items:        views,
-		Categories:   cats,
-		ItemFormData: itemFormData{Categories: cats},
-		Month:        monthStr,
-		MonthLabel:   monthTime.Format(monthLabelLayout),
-		PrevMonth:    monthTime.AddDate(0, prevMonthOffset, 0).Format(monthLayout),
-		NextMonth:    monthTime.AddDate(0, nextMonthOffset, 0).Format(monthLayout),
-		Search:       search,
-		ItemType:     q.Get("type"),
-		Category:     q.Get("category"),
+		Items:           views,
+		Categories:      cats,
+		ItemFormData:    itemFormData{Categories: cats},
+		Month:           monthStr,
+		MonthLabel:      monthTime.Format(monthLabelLayout),
+		PrevMonth:       monthTime.AddDate(0, prevMonthOffset, 0).Format(monthLayout),
+		NextMonth:       monthTime.AddDate(0, nextMonthOffset, 0).Format(monthLayout),
+		Search:          search,
+		ItemType:        q.Get("type"),
+		Category:        q.Get("category"),
+		TotalExpense:    totalExpense,
+		TotalIncome:     totalIncome,
+		TotalInvestment: totalInvestment,
 	})
 }
 

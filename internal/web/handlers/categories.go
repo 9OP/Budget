@@ -41,6 +41,9 @@ func (h *Handler) DeleteCategoryPartial(w http.ResponseWriter, r *http.Request) 
 		case errors.Is(err, domain.ErrCategoryNotFound):
 			setToast(w, err.Error(), "error")
 			http.Error(w, err.Error(), http.StatusNotFound)
+		case errors.Is(err, domain.ErrCategoryInUse):
+			setToast(w, err.Error(), "error")
+			http.Error(w, err.Error(), http.StatusConflict)
 		default:
 			setToast(w, "internal server error", "error")
 			http.Error(w, "internal server error", http.StatusInternalServerError)

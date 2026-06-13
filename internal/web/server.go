@@ -12,6 +12,7 @@ import (
 	"github.com/9op/budget/internal/web/middleware"
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httprate"
 )
 
 //go:embed static templates
@@ -21,6 +22,8 @@ const (
 	requestTimeout   = 30 * time.Second
 	compressionLevel = 5
 	staticMaxAge     = time.Hour
+	rateLimitReqs    = 200
+	rateLimitWindow  = time.Minute
 )
 
 // ServerConfig holds HTTP server configuration.
@@ -58,6 +61,7 @@ func NewServer(svc *service.Service, cfg ServerConfig) (*chi.Mux, error) {
 	// Protected routes — require a valid session.
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.RequireAuth(cfg.Auth.Validator))
+		r.Use(httprate.LimitByRealIP(rateLimitReqs, rateLimitWindow))
 
 		// Pages.
 		r.Get("/", h.Dashboard)

@@ -16,6 +16,12 @@
     <div class="card-label">Expenses</div>
     <div class="card-value">{{printf "%.2f" .TotalExpense}}</div>
   </div>
+  {{if gt .TotalInvestment 0.0}}
+  <div class="card card-investment">
+    <div class="card-label">Investments</div>
+    <div class="card-value">{{printf "%.2f" .TotalInvestment}}</div>
+  </div>
+  {{end}}
   <div class="card {{if lt .Net 0.0}}card-negative{{else}}card-net{{end}}">
     <div class="card-label">Net</div>
     <div class="card-value">{{printf "%.2f" .Net}}</div>

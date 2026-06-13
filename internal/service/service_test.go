@@ -12,8 +12,6 @@ import (
 )
 
 // month returns a time.Time at the first instant of the given year/month (UTC).
-//
-//nolint:unparam // year is a meaningful parameter even if all current tests happen to use 2025
 func month(year int, m time.Month) time.Time {
 	return time.Date(year, m, 1, 0, 0, 0, 0, time.UTC)
 }
@@ -177,11 +175,12 @@ func TestCreateItem_Success(t *testing.T) {
 	repo := &fakeRepo{categories: []domain.Category{{Name: "food"}}}
 	svc := service.NewService(repo)
 
+	now := time.Now().UTC()
 	item, err := svc.CreateItem(context.Background(), service.CreateItemInput{
 		Type:     domain.Expense,
 		Name:     "Groceries",
 		Amount:   42.5,
-		Date:     time.Date(2025, 5, 28, 0, 0, 0, 0, time.UTC),
+		Date:     now,
 		Category: "food",
 	})
 	if err != nil {
@@ -192,8 +191,8 @@ func TestCreateItem_Success(t *testing.T) {
 		t.Error("expected non-empty ID")
 	}
 
-	if item.Date.Year() != 2025 || item.Date.Month() != time.May {
-		t.Errorf("expected date in 2025-05, got %v", item.Date)
+	if item.Date.Year() != now.Year() || item.Date.Month() != now.Month() {
+		t.Errorf("expected date in %d-%02d, got %v", now.Year(), now.Month(), item.Date)
 	}
 }
 
@@ -217,7 +216,7 @@ func TestCreateItem_DatePreserved(t *testing.T) {
 	repo := &fakeRepo{categories: []domain.Category{{Name: "food"}}}
 	svc := service.NewService(repo)
 
-	date := time.Date(2025, 3, 15, 0, 0, 0, 0, time.UTC)
+	date := time.Now().UTC().Truncate(24 * time.Hour)
 	item, err := svc.CreateItem(context.Background(), service.CreateItemInput{
 		Type:     domain.Income,
 		Name:     "Salary",
@@ -373,15 +372,18 @@ func TestSetBudget_Upsert(t *testing.T) {
 	repo := &fakeRepo{categories: []domain.Category{{Name: "food"}}}
 	svc := service.NewService(repo)
 
+	now := time.Now().UTC()
+	currentMonth := month(now.Year(), now.Month())
+
 	_, err := svc.SetBudget(context.Background(), domain.Budget{
-		Category: "food", Month: month(2025, time.May), Amount: 300,
+		Category: "food", Month: currentMonth, Amount: 300,
 	})
 	if err != nil {
 		t.Fatalf("first set: %v", err)
 	}
 
 	updated, err := svc.SetBudget(context.Background(), domain.Budget{
-		Category: "food", Month: month(2025, time.May), Amount: 400,
+		Category: "food", Month: currentMonth, Amount: 400,
 	})
 	if err != nil {
 		t.Fatalf("second set: %v", err)

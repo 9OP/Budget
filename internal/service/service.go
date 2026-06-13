@@ -11,6 +11,13 @@ import (
 	"github.com/9op/budget/internal/domain"
 )
 
+const (
+	maxCategories    = 100
+	maxItemsPerMonth = 500
+	dateRangeYears   = 1
+	hoursPerDay      = 24
+)
+
 // CreateItemInput holds the input data required to create a new item.
 type CreateItemInput struct {
 	Type     domain.ItemType
@@ -53,6 +60,10 @@ func (s *Service) CreateItem(ctx context.Context, input CreateItemInput) (domain
 		return domain.Item{}, domain.ErrNegativeAmount
 	}
 
+	if !withinDateRange(input.Date) {
+		return domain.Item{}, domain.ErrItemDateOutOfRange
+	}
+
 	cats, err := s.repo.ListCategories(ctx)
 	if err != nil {
 		return domain.Item{}, err
@@ -60,6 +71,18 @@ func (s *Service) CreateItem(ctx context.Context, input CreateItemInput) (domain
 
 	if !categoryExists(cats, input.Category) {
 		return domain.Item{}, domain.ErrCategoryNotFound
+	}
+
+	month := input.Date.UTC().Truncate(hoursPerDay * time.Hour)
+	month = month.AddDate(0, 0, -month.Day()+1)
+
+	existing, err := s.repo.ListItems(ctx, domain.ItemFilter{Month: &month})
+	if err != nil {
+		return domain.Item{}, err
+	}
+
+	if len(existing) >= maxItemsPerMonth {
+		return domain.Item{}, domain.ErrItemsMonthLimitReached
 	}
 
 	item := domain.Item{
@@ -90,6 +113,10 @@ func (s *Service) UpdateItem(ctx context.Context, id string, input UpdateItemInp
 
 	if input.Amount < 0 {
 		return domain.Item{}, domain.ErrNegativeAmount
+	}
+
+	if !withinDateRange(input.Date) {
+		return domain.Item{}, domain.ErrItemDateOutOfRange
 	}
 
 	cats, err := s.repo.ListCategories(ctx)
@@ -142,6 +169,10 @@ func (s *Service) CreateCategory(ctx context.Context, name string) (domain.Categ
 	cats, err := s.repo.ListCategories(ctx)
 	if err != nil {
 		return domain.Category{}, err
+	}
+
+	if len(cats) >= maxCategories {
+		return domain.Category{}, domain.ErrCategoryLimitReached
 	}
 
 	if categoryExists(cats, trimmed) {
@@ -205,6 +236,10 @@ func (s *Service) SetBudget(ctx context.Context, budget domain.Budget) (domain.B
 
 	if budget.Amount < 0 {
 		return domain.Budget{}, domain.ErrNegativeAmount
+	}
+
+	if !withinDateRange(budget.Month) {
+		return domain.Budget{}, domain.ErrBudgetMonthOutOfRange
 	}
 
 	cats, err := s.repo.ListCategories(ctx)
@@ -274,9 +309,17 @@ func (s *Service) resolveEffectiveBudgets(ctx context.Context, filter domain.Bud
 
 // --- Helpers ---
 
+func withinDateRange(t time.Time) bool {
+	now := time.Now()
+	earliest := now.AddDate(-dateRangeYears, 0, 0)
+	latest := now.AddDate(dateRangeYears, 0, 0)
+
+	return !t.Before(earliest) && !t.After(latest)
+}
+
 func validateItemType(t domain.ItemType) error {
 	switch t {
-	case domain.Expense, domain.Income:
+	case domain.Expense, domain.Income, domain.Investment:
 		return nil
 	default:
 		return domain.ErrInvalidItemType
