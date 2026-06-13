@@ -132,10 +132,6 @@ func (*Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login", http.StatusFound)
 }
 
-type tokenResponse struct {
-	AccessToken string `json:"access_token"`
-}
-
 func (h *Handler) exchangeCode(ctx context.Context, code, verifier string) (string, error) {
 	body, err := json.Marshal(map[string]string{
 		"auth_code":     code,
@@ -171,7 +167,9 @@ func (h *Handler) exchangeCode(ctx context.Context, code, verifier string) (stri
 		return "", fmt.Errorf("read response: %w", err)
 	}
 
-	var tr tokenResponse
+	tr := struct {
+		AccessToken string `json:"access_token"`
+	}{}
 	if err := json.Unmarshal(respBody, &tr); err != nil {
 		return "", fmt.Errorf("parse response: %w", err)
 	}

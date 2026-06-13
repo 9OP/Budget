@@ -53,27 +53,17 @@ func (v *Validator) ValidateToken(ctx context.Context, tokenStr string) (User, e
 		return User{}, ErrInvalidToken
 	}
 
-	return User{
-		ID:    sub,
-		Email: stringClaim(token, "email"),
-		Name:  nameFromToken(token),
-	}, nil
-}
-
-// nameFromToken extracts the display name from user_metadata, falling back to email.
-func nameFromToken(token jwt.Token) string {
-	meta, ok := token.PrivateClaims()["user_metadata"].(map[string]any)
-	if ok {
-		if name, nameOK := meta["full_name"].(string); nameOK && name != "" {
-			return name
-		}
-
-		if name, nameOK := meta["name"].(string); nameOK && name != "" {
-			return name
+	email := stringClaim(token, "email")
+	name := email
+	if meta, ok := token.PrivateClaims()["user_metadata"].(map[string]any); ok {
+		if n, ok := meta["full_name"].(string); ok && n != "" {
+			name = n
+		} else if n, ok := meta["name"].(string); ok && n != "" {
+			name = n
 		}
 	}
 
-	return stringClaim(token, "email")
+	return User{ID: sub, Email: email, Name: name}, nil
 }
 
 func stringClaim(token jwt.Token, key string) string {
