@@ -15,7 +15,7 @@ var ErrInvalidMonth = errors.New("invalid month")
 var ErrNegativeAmount = errors.New("amount must be non-negative")
 
 // ErrInvalidItemType is returned when the item type is not EXPENSE or INCOME.
-var ErrInvalidItemType = errors.New("invalid item type, must be EXPENSE or INCOME")
+var ErrInvalidItemType = errors.New("invalid item type, must be EXPENSE, INCOME or INVESTMENT")
 
 // ErrMissingItemName is returned when an item name is empty.
 var ErrMissingItemName = errors.New("item name is required")

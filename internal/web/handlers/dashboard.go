@@ -46,6 +46,7 @@ type DashboardData struct {
 	NextMonth         string
 	TotalIncome       float64
 	TotalExpense      float64
+	TotalInvestment   float64
 	Net               float64
 	BudgetRows        []service.BudgetConsumption
 	ExpenseByCategory []categoryView
@@ -82,6 +83,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		NextMonth:         monthTime.AddDate(0, nextMonthOffset, 0).Format(monthLayout),
 		TotalIncome:       summary.TotalIncome,
 		TotalExpense:      summary.TotalExpense,
+		TotalInvestment:   summary.TotalInvestment,
 		Net:               summary.Net,
 		BudgetRows:        summary.BudgetRows,
 		ExpenseByCategory: expCats,

@@ -18,13 +18,15 @@ type TrendsData struct {
 }
 
 type trendsChartData struct {
-	Labels     []string  `json:"labels"`
-	Income     []float64 `json:"income"`
-	Expense    []float64 `json:"expense"`
-	Net        []float64 `json:"net"`
-	CumIncome  []float64 `json:"cum_income"`
-	CumExpense []float64 `json:"cum_expense"`
-	CumNet     []float64 `json:"cum_net"`
+	Labels        []string  `json:"labels"`
+	Income        []float64 `json:"income"`
+	Expense       []float64 `json:"expense"`
+	Investment    []float64 `json:"investment"`
+	Net           []float64 `json:"net"`
+	CumIncome     []float64 `json:"cum_income"`
+	CumExpense    []float64 `json:"cum_expense"`
+	CumInvestment []float64 `json:"cum_investment"`
+	CumNet        []float64 `json:"cum_net"`
 }
 
 // TrendsPage renders the month-over-month trends chart.
@@ -50,7 +52,7 @@ type monthKey struct {
 }
 
 func buildTrendsChartData(items []domain.Item) trendsChartData {
-	totals := map[monthKey][2]float64{} // [0]=income [1]=expense
+	totals := map[monthKey][3]float64{} // [0]=income [1]=expense [2]=investment
 
 	for _, item := range items {
 		key := monthKey{item.Date.Year(), item.Date.Month()}
@@ -61,6 +63,8 @@ func buildTrendsChartData(items []domain.Item) trendsChartData {
 			t[0] += item.Amount
 		case domain.Expense:
 			t[1] += item.Amount
+		case domain.Investment:
+			t[2] += item.Amount
 		default:
 			// unknown type; skip
 		}
@@ -100,16 +104,18 @@ func buildTrendsChartData(items []domain.Item) trendsChartData {
 
 	n := len(allMonths)
 	cd := trendsChartData{
-		Labels:     make([]string, n),
-		Income:     make([]float64, n),
-		Expense:    make([]float64, n),
-		Net:        make([]float64, n),
-		CumIncome:  make([]float64, n),
-		CumExpense: make([]float64, n),
-		CumNet:     make([]float64, n),
+		Labels:        make([]string, n),
+		Income:        make([]float64, n),
+		Expense:       make([]float64, n),
+		Investment:    make([]float64, n),
+		Net:           make([]float64, n),
+		CumIncome:     make([]float64, n),
+		CumExpense:    make([]float64, n),
+		CumInvestment: make([]float64, n),
+		CumNet:        make([]float64, n),
 	}
 
-	var cumInc, cumExp float64
+	var cumInc, cumExp, cumInv float64
 
 	for i, mk := range allMonths {
 		t := time.Date(mk.year, mk.month, 1, 0, 0, 0, 0, time.UTC)
@@ -118,15 +124,18 @@ func buildTrendsChartData(items []domain.Item) trendsChartData {
 		if data, ok := totals[mk]; ok {
 			cd.Income[i] = data[0]
 			cd.Expense[i] = data[1]
+			cd.Investment[i] = data[2]
 		}
 
 		cd.Net[i] = cd.Income[i] - cd.Expense[i]
 
 		cumInc += cd.Income[i]
 		cumExp += cd.Expense[i]
+		cumInv += cd.Investment[i]
 
 		cd.CumIncome[i] = cumInc
 		cd.CumExpense[i] = cumExp
+		cd.CumInvestment[i] = cumInv
 		cd.CumNet[i] = cumInc - cumExp
 	}
 

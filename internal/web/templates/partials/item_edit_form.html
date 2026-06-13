@@ -4,8 +4,9 @@
   <td><input type="text" name="name" value="{{.Item.Name}}" required style="width:100%"></td>
   <td>
     <select name="type">
-      <option value="EXPENSE" {{if eq .Item.Type "EXPENSE"}}selected{{end}}>Expense</option>
-      <option value="INCOME"  {{if eq .Item.Type "INCOME"}}selected{{end}}>Income</option>
+      <option value="EXPENSE"    {{if eq .Item.Type "EXPENSE"}}selected{{end}}>Expense</option>
+      <option value="INCOME"     {{if eq .Item.Type "INCOME"}}selected{{end}}>Income</option>
+      <option value="INVESTMENT" {{if eq .Item.Type "INVESTMENT"}}selected{{end}}>Investment</option>
     </select>
   </td>
   <td>

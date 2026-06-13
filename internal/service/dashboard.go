@@ -34,12 +34,14 @@ type BudgetConsumption struct {
 
 // DashboardSummary holds all computed data for the dashboard page.
 type DashboardSummary struct {
-	TotalIncome       float64
-	TotalExpense      float64
-	Net               float64
-	BudgetRows        []BudgetConsumption
-	ExpenseByCategory []CategoryTotal
-	IncomeByCategory  []CategoryTotal
+	TotalIncome          float64
+	TotalExpense         float64
+	TotalInvestment      float64
+	Net                  float64
+	BudgetRows           []BudgetConsumption
+	ExpenseByCategory    []CategoryTotal
+	IncomeByCategory     []CategoryTotal
+	InvestmentByCategory []CategoryTotal
 }
 
 // GetDashboardSummary computes aggregated totals and budget consumption for the given month.
@@ -58,10 +60,11 @@ func (s *Service) GetDashboardSummary(ctx context.Context, month time.Time) (Das
 }
 
 func computeDashboardSummary(items []domain.Item, budgets []domain.Budget) DashboardSummary {
-	var totalIncome, totalExpense float64
+	var totalIncome, totalExpense, totalInvestment float64
 
 	expByCat := map[string]float64{}
 	incByCat := map[string]float64{}
+	invByCat := map[string]float64{}
 
 	for _, item := range items {
 		switch item.Type {
@@ -71,6 +74,9 @@ func computeDashboardSummary(items []domain.Item, budgets []domain.Budget) Dashb
 		case domain.Expense:
 			totalExpense += item.Amount
 			expByCat[item.Category] += item.Amount
+		case domain.Investment:
+			totalInvestment += item.Amount
+			invByCat[item.Category] += item.Amount
 		default:
 			// unknown type; skip
 		}
@@ -78,6 +84,7 @@ func computeDashboardSummary(items []domain.Item, budgets []domain.Budget) Dashb
 
 	expenseCats := buildCategoryTotals(expByCat, totalExpense)
 	incomeCats := buildCategoryTotals(incByCat, totalIncome)
+	investmentCats := buildCategoryTotals(invByCat, totalInvestment)
 
 	spentByCategory := make(map[string]float64, len(expenseCats))
 	for _, c := range expenseCats {
@@ -121,12 +128,14 @@ func computeDashboardSummary(items []domain.Item, budgets []domain.Budget) Dashb
 	})
 
 	return DashboardSummary{
-		TotalIncome:       totalIncome,
-		TotalExpense:      totalExpense,
-		Net:               totalIncome - totalExpense,
-		BudgetRows:        budgetRows,
-		ExpenseByCategory: expenseCats,
-		IncomeByCategory:  incomeCats,
+		TotalIncome:          totalIncome,
+		TotalExpense:         totalExpense,
+		TotalInvestment:      totalInvestment,
+		Net:                  totalIncome - totalExpense,
+		BudgetRows:           budgetRows,
+		ExpenseByCategory:    expenseCats,
+		IncomeByCategory:     incomeCats,
+		InvestmentByCategory: investmentCats,
 	}
 }
 

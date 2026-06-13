@@ -319,7 +319,7 @@ func withinDateRange(t time.Time) bool {
 
 func validateItemType(t domain.ItemType) error {
 	switch t {
-	case domain.Expense, domain.Income:
+	case domain.Expense, domain.Income, domain.Investment:
 		return nil
 	default:
 		return domain.ErrInvalidItemType

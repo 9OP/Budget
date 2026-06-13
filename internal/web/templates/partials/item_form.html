@@ -6,8 +6,9 @@
         hx-on::after-request="if(event.detail.successful) this.reset()">
     <div class="form-row">
       <select name="type" required>
-        <option value="EXPENSE" {{if and .Prefill (eq .Prefill.Type "EXPENSE")}}selected{{end}}>Expense</option>
-        <option value="INCOME"  {{if and .Prefill (eq .Prefill.Type "INCOME")}}selected{{end}}>Income</option>
+        <option value="EXPENSE"    {{if and .Prefill (eq .Prefill.Type "EXPENSE")}}selected{{end}}>Expense</option>
+        <option value="INCOME"     {{if and .Prefill (eq .Prefill.Type "INCOME")}}selected{{end}}>Income</option>
+        <option value="INVESTMENT" {{if and .Prefill (eq .Prefill.Type "INVESTMENT")}}selected{{end}}>Investment</option>
       </select>
       <input type="text"   name="name"   placeholder="Description" required style="flex:1;min-width:140px"
              value="{{if .Prefill}}{{.Prefill.Name}}{{end}}">

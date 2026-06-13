@@ -8,10 +8,11 @@ import (
 // ItemType represents the type of a financial item.
 type ItemType string
 
-// Expense and Income are the two valid item types.
+// Expense, Income and Investment are the valid item types.
 const (
-	Expense ItemType = "EXPENSE"
-	Income  ItemType = "INCOME"
+	Expense    ItemType = "EXPENSE"
+	Income     ItemType = "INCOME"
+	Investment ItemType = "INVESTMENT"
 )
 
 // Item represents a financial transaction.

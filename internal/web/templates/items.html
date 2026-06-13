@@ -18,8 +18,9 @@
     <input type="text" name="search" value="{{.Search}}" placeholder="Search by name…" style="min-width:180px">
     <select name="type">
       <option value="" {{if eq .ItemType ""}}selected{{end}}>All types</option>
-      <option value="EXPENSE" {{if eq .ItemType "EXPENSE"}}selected{{end}}>Expense</option>
-      <option value="INCOME"  {{if eq .ItemType "INCOME"}}selected{{end}}>Income</option>
+      <option value="EXPENSE"    {{if eq .ItemType "EXPENSE"}}selected{{end}}>Expense</option>
+      <option value="INCOME"     {{if eq .ItemType "INCOME"}}selected{{end}}>Income</option>
+      <option value="INVESTMENT" {{if eq .ItemType "INVESTMENT"}}selected{{end}}>Investment</option>
     </select>
     <select name="category">
       <option value="" {{if eq .Category ""}}selected{{end}}>All categories</option>

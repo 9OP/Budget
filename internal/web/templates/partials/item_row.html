@@ -2,7 +2,7 @@
 <tr>
   <td>{{.Date}}</td>
   <td>{{.Name}}</td>
-  <td class="{{if eq .Type "EXPENSE"}}type-expense{{else}}type-income{{end}}">{{if eq .Type "EXPENSE"}}Expense{{else}}Income{{end}}</td>
+  <td class="{{if eq .Type "EXPENSE"}}type-expense{{else if eq .Type "INCOME"}}type-income{{else}}type-investment{{end}}">{{if eq .Type "EXPENSE"}}Expense{{else if eq .Type "INCOME"}}Income{{else}}Investment{{end}}</td>
   <td>{{.Category}}</td>
   <td class="amount">{{printf "%.2f" .Amount}}</td>
   <td>

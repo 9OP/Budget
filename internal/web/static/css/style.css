@@ -158,6 +158,7 @@ body {
 .card-income .card-value      { color: var(--income); }
 .card-expense .card-value     { color: var(--expense); }
 .card-investment .card-value  { color: var(--investment); }
+.card-investment .card-value  { color: var(--investment); }
 .card-net .card-value         { color: var(--primary); }
 .card-negative .card-value    { color: var(--expense); }
 
@@ -298,6 +299,7 @@ body {
 
 .type-expense     { color: var(--expense);     font-weight: 500; }
 .type-income      { color: var(--income);      font-weight: 500; }
+.type-investment  { color: var(--investment);  font-weight: 500; }
 .type-investment  { color: var(--investment);  font-weight: 500; }
 
 .amount { font-variant-numeric: tabular-nums; font-weight: 500; }
