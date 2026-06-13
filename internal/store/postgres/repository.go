@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/9op/budget/internal/auth"
 	"github.com/9op/budget/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -25,20 +26,35 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
+// mustUserID extracts the user UUID from ctx or returns ErrUnauthenticated.
+func mustUserID(ctx context.Context) (string, error) {
+	id, ok := auth.UserIDFromContext(ctx)
+	if !ok {
+		return "", domain.ErrUnauthenticated
+	}
+
+	return id, nil
+}
+
 // --- Items ---
 
 // CreateItem inserts a new item and returns it with the generated UUID as ID.
 func (r *Repository) CreateItem(ctx context.Context, item domain.Item) (domain.Item, error) {
-	catID, err := r.categoryIDByName(ctx, item.Category)
+	userID, err := mustUserID(ctx)
 	if err != nil {
 		return domain.Item{}, err
 	}
 
-	const q = `INSERT INTO items (type, name, amount, date, category_id)
-		VALUES ($1, $2, $3, $4, $5::uuid) RETURNING id::text`
+	catID, err := r.categoryIDByName(ctx, userID, item.Category)
+	if err != nil {
+		return domain.Item{}, err
+	}
+
+	const q = `INSERT INTO items (user_id, type, name, amount, date, category_id)
+		VALUES ($1::uuid, $2, $3, $4, $5, $6::uuid) RETURNING id::text`
 
 	if err := r.pool.QueryRow(ctx, q,
-		string(item.Type), item.Name, item.Amount, item.Date, catID,
+		userID, string(item.Type), item.Name, item.Amount, item.Date, catID,
 	).Scan(&item.ID); err != nil {
 		return domain.Item{}, fmt.Errorf("insert item: %w", err)
 	}
@@ -46,13 +62,18 @@ func (r *Repository) CreateItem(ctx context.Context, item domain.Item) (domain.I
 	return item, nil
 }
 
-// GetItem fetches a single item by UUID.
+// GetItem fetches a single item by UUID, scoped to the authenticated user.
 func (r *Repository) GetItem(ctx context.Context, id string) (domain.Item, error) {
+	userID, err := mustUserID(ctx)
+	if err != nil {
+		return domain.Item{}, err
+	}
+
 	const q = `SELECT i.id::text, i.type, i.name, i.amount, i.date, c.name
 		FROM items i JOIN categories c ON c.id = i.category_id
-		WHERE i.id = $1::uuid`
+		WHERE i.id = $1::uuid AND i.user_id = $2::uuid`
 
-	item, err := scanItem(r.pool.QueryRow(ctx, q, id))
+	item, err := scanItem(r.pool.QueryRow(ctx, q, id, userID))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.Item{}, domain.ErrItemNotFound
 	}
@@ -64,18 +85,23 @@ func (r *Repository) GetItem(ctx context.Context, id string) (domain.Item, error
 	return item, nil
 }
 
-// UpdateItem overwrites the item identified by item.ID.
+// UpdateItem overwrites the item identified by item.ID, scoped to the authenticated user.
 func (r *Repository) UpdateItem(ctx context.Context, item domain.Item) (domain.Item, error) {
-	catID, err := r.categoryIDByName(ctx, item.Category)
+	userID, err := mustUserID(ctx)
+	if err != nil {
+		return domain.Item{}, err
+	}
+
+	catID, err := r.categoryIDByName(ctx, userID, item.Category)
 	if err != nil {
 		return domain.Item{}, err
 	}
 
 	const q = `UPDATE items SET type=$1, name=$2, amount=$3, date=$4, category_id=$5::uuid
-		WHERE id=$6::uuid`
+		WHERE id=$6::uuid AND user_id=$7::uuid`
 
 	tag, err := r.pool.Exec(ctx, q,
-		string(item.Type), item.Name, item.Amount, item.Date, catID, item.ID,
+		string(item.Type), item.Name, item.Amount, item.Date, catID, item.ID, userID,
 	)
 	if err != nil {
 		return domain.Item{}, fmt.Errorf("update item: %w", err)
@@ -88,11 +114,16 @@ func (r *Repository) UpdateItem(ctx context.Context, item domain.Item) (domain.I
 	return item, nil
 }
 
-// DeleteItem removes an item by UUID.
+// DeleteItem removes an item by UUID, scoped to the authenticated user.
 func (r *Repository) DeleteItem(ctx context.Context, id string) error {
-	const q = `DELETE FROM items WHERE id = $1::uuid`
+	userID, err := mustUserID(ctx)
+	if err != nil {
+		return err
+	}
 
-	tag, err := r.pool.Exec(ctx, q, id)
+	const q = `DELETE FROM items WHERE id = $1::uuid AND user_id = $2::uuid`
+
+	tag, err := r.pool.Exec(ctx, q, id, userID)
 	if err != nil {
 		return fmt.Errorf("delete item: %w", err)
 	}
@@ -104,11 +135,17 @@ func (r *Repository) DeleteItem(ctx context.Context, id string) error {
 	return nil
 }
 
-// ListItems returns items matching the given filter.
+// ListItems returns items matching the given filter, scoped to the authenticated user.
 func (r *Repository) ListItems(ctx context.Context, filter domain.ItemFilter) ([]domain.Item, error) {
+	userID, err := mustUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	args := []any{userID}
 	query := `SELECT i.id::text, i.type, i.name, i.amount, i.date, c.name
-		FROM items i JOIN categories c ON c.id = i.category_id WHERE TRUE`
-	args := []any{}
+		FROM items i JOIN categories c ON c.id = i.category_id
+		WHERE i.user_id = $1::uuid`
 
 	if filter.Month != nil {
 		args = append(args, filter.Month.Year(), int(filter.Month.Month()))
@@ -172,11 +209,16 @@ func (r *Repository) ListItems(ctx context.Context, filter domain.ItemFilter) ([
 
 // --- Categories ---
 
-// CreateCategory inserts a new category, returning ErrCategoryAlreadyExists on duplicate.
+// CreateCategory inserts a new category for the authenticated user, returning ErrCategoryAlreadyExists on duplicate.
 func (r *Repository) CreateCategory(ctx context.Context, cat domain.Category) (domain.Category, error) {
-	const q = `INSERT INTO categories (name) VALUES ($1)`
+	userID, err := mustUserID(ctx)
+	if err != nil {
+		return domain.Category{}, err
+	}
 
-	_, err := r.pool.Exec(ctx, q, cat.Name)
+	const q = `INSERT INTO categories (user_id, name) VALUES ($1::uuid, $2)`
+
+	_, err = r.pool.Exec(ctx, q, userID, cat.Name)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgUniqueViolation {
@@ -189,11 +231,16 @@ func (r *Repository) CreateCategory(ctx context.Context, cat domain.Category) (d
 	return cat, nil
 }
 
-// ListCategories returns all categories sorted by name.
+// ListCategories returns all categories for the authenticated user, sorted by name.
 func (r *Repository) ListCategories(ctx context.Context) ([]domain.Category, error) {
-	const q = `SELECT name FROM categories ORDER BY name`
+	userID, err := mustUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	rows, err := r.pool.Query(ctx, q)
+	const q = `SELECT name FROM categories WHERE user_id = $1::uuid ORDER BY name`
+
+	rows, err := r.pool.Query(ctx, q, userID)
 	if err != nil {
 		return nil, fmt.Errorf("list categories: %w", err)
 	}
@@ -217,10 +264,17 @@ func (r *Repository) ListCategories(ctx context.Context) ([]domain.Category, err
 	return cats, nil
 }
 
-// RenameCategory updates the category name. Because items and budgets reference
-// categories by UUID, no cascade is needed — the JOIN picks up the new name automatically.
+// RenameCategory updates the category name for the authenticated user.
 func (r *Repository) RenameCategory(ctx context.Context, oldName, newName string) error {
-	tag, err := r.pool.Exec(ctx, `UPDATE categories SET name=$1 WHERE name=$2`, newName, oldName)
+	userID, err := mustUserID(ctx)
+	if err != nil {
+		return err
+	}
+
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE categories SET name=$1 WHERE name=$2 AND user_id=$3::uuid`,
+		newName, oldName, userID,
+	)
 	if err != nil {
 		return fmt.Errorf("rename category: %w", err)
 	}
@@ -232,9 +286,17 @@ func (r *Repository) RenameCategory(ctx context.Context, oldName, newName string
 	return nil
 }
 
-// DeleteCategory removes a category by name. Fails if items or budgets still reference it.
+// DeleteCategory removes a category by name for the authenticated user.
 func (r *Repository) DeleteCategory(ctx context.Context, name string) error {
-	tag, err := r.pool.Exec(ctx, `DELETE FROM categories WHERE name ILIKE $1`, name)
+	userID, err := mustUserID(ctx)
+	if err != nil {
+		return err
+	}
+
+	tag, err := r.pool.Exec(ctx,
+		`DELETE FROM categories WHERE name ILIKE $1 AND user_id = $2::uuid`,
+		name, userID,
+	)
 	if err != nil {
 		return fmt.Errorf("delete category: %w", err)
 	}
@@ -248,19 +310,24 @@ func (r *Repository) DeleteCategory(ctx context.Context, name string) error {
 
 // --- Budgets ---
 
-// SetBudget upserts a budget row for (category, month).
+// SetBudget upserts a budget row for (user, category, month).
 func (r *Repository) SetBudget(ctx context.Context, budget domain.Budget) (domain.Budget, error) {
-	catID, err := r.categoryIDByName(ctx, budget.Category)
+	userID, err := mustUserID(ctx)
 	if err != nil {
 		return domain.Budget{}, err
 	}
 
-	const q = `INSERT INTO budgets (category_id, month, amount) VALUES ($1::uuid, $2, $3)
-		ON CONFLICT (category_id, month) DO UPDATE SET amount = EXCLUDED.amount`
+	catID, err := r.categoryIDByName(ctx, userID, budget.Category)
+	if err != nil {
+		return domain.Budget{}, err
+	}
+
+	const q = `INSERT INTO budgets (user_id, category_id, month, amount) VALUES ($1::uuid, $2::uuid, $3, $4)
+		ON CONFLICT (user_id, category_id, month) DO UPDATE SET amount = EXCLUDED.amount`
 
 	month := firstOfMonth(budget.Month)
 
-	if _, err := r.pool.Exec(ctx, q, catID, month, budget.Amount); err != nil {
+	if _, err := r.pool.Exec(ctx, q, userID, catID, month, budget.Amount); err != nil {
 		return domain.Budget{}, fmt.Errorf("upsert budget: %w", err)
 	}
 
@@ -269,11 +336,17 @@ func (r *Repository) SetBudget(ctx context.Context, budget domain.Budget) (domai
 	return budget, nil
 }
 
-// ListBudgets returns budgets matching the given filter.
+// ListBudgets returns budgets matching the given filter, scoped to the authenticated user.
 func (r *Repository) ListBudgets(ctx context.Context, filter domain.BudgetFilter) ([]domain.Budget, error) {
+	userID, err := mustUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	args := []any{userID}
 	query := `SELECT c.name, b.month, b.amount
-		FROM budgets b JOIN categories c ON c.id = b.category_id WHERE TRUE`
-	args := []any{}
+		FROM budgets b JOIN categories c ON c.id = b.category_id
+		WHERE b.user_id = $1::uuid`
 
 	if filter.Month != nil {
 		args = append(args, firstOfMonth(*filter.Month))
@@ -311,12 +384,19 @@ func (r *Repository) ListBudgets(ctx context.Context, filter domain.BudgetFilter
 	return budgets, nil
 }
 
-// DeleteBudget removes the budget for (category, month).
+// DeleteBudget removes the budget for (user, category, month).
 func (r *Repository) DeleteBudget(ctx context.Context, category string, month time.Time) error {
-	const q = `DELETE FROM budgets WHERE category_id = (SELECT id FROM categories WHERE name ILIKE $1)
-		AND month = $2`
+	userID, err := mustUserID(ctx)
+	if err != nil {
+		return err
+	}
 
-	tag, err := r.pool.Exec(ctx, q, category, firstOfMonth(month))
+	const q = `DELETE FROM budgets
+		WHERE user_id = $1::uuid
+		AND category_id = (SELECT id FROM categories WHERE name ILIKE $2 AND user_id = $1::uuid)
+		AND month = $3`
+
+	tag, err := r.pool.Exec(ctx, q, userID, category, firstOfMonth(month))
 	if err != nil {
 		return fmt.Errorf("delete budget: %w", err)
 	}
@@ -364,11 +444,14 @@ func firstOfMonth(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
 }
 
-// categoryIDByName looks up the UUID of a category by name (case-insensitive).
-func (r *Repository) categoryIDByName(ctx context.Context, name string) (string, error) {
+// categoryIDByName looks up the UUID of a category by name for a given user (case-insensitive).
+func (r *Repository) categoryIDByName(ctx context.Context, userID, name string) (string, error) {
 	var id string
 
-	err := r.pool.QueryRow(ctx, `SELECT id::text FROM categories WHERE name ILIKE $1`, name).Scan(&id)
+	err := r.pool.QueryRow(ctx,
+		`SELECT id::text FROM categories WHERE name ILIKE $1 AND user_id = $2::uuid`,
+		name, userID,
+	).Scan(&id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", domain.ErrCategoryNotFound
 	}

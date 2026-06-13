@@ -38,7 +38,7 @@ func (h *Handler) TrendsPage(w http.ResponseWriter, r *http.Request) {
 
 	b, _ := json.Marshal(buildTrendsChartData(items)) //nolint:errchkjson // only safe types; Marshal cannot fail
 
-	h.renderPage(w, "trends", &TrendsData{
+	h.renderPage(w, r, "trends", &TrendsData{
 		ChartJSON: template.JS(b), //nolint:gosec // JSON is generated internally, not user-controlled
 		HasData:   len(items) > 0,
 	})

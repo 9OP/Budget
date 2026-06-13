@@ -75,7 +75,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 
 	expCats := withColors(summary.ExpenseByCategory)
 
-	h.renderPage(w, "dashboard", &DashboardData{
+	h.renderPage(w, r, "dashboard", &DashboardData{
 		Month:             month,
 		MonthLabel:        monthTime.Format(monthLabelLayout),
 		PrevMonth:         monthTime.AddDate(0, prevMonthOffset, 0).Format(monthLayout),

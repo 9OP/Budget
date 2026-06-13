@@ -22,7 +22,7 @@ func (h *Handler) CategoriesPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.renderPage(w, "categories", &CategoriesData{
+	h.renderPage(w, r, "categories", &CategoriesData{
 		Categories: cats,
 	})
 }

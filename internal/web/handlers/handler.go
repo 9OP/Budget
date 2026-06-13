@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/9op/budget/internal/auth"
 	"github.com/9op/budget/internal/service"
 )
 
@@ -26,33 +27,35 @@ const (
 
 // Handler holds dependencies for page and partial handlers.
 type Handler struct {
-	svc  *service.Service
-	tmpl templates
+	svc     *service.Service
+	tmpl    templates
+	authCfg AuthConfig
 }
 
 // NewHandler creates a Handler, parsing all templates from the given filesystem.
-func NewHandler(svc *service.Service, fsys fs.FS) (*Handler, error) {
+func NewHandler(svc *service.Service, fsys fs.FS, authCfg AuthConfig) (*Handler, error) {
 	tmpl, err := parseTemplates(fsys)
 	if err != nil {
 		return nil, fmt.Errorf("parse templates: %w", err)
 	}
 
-	return &Handler{svc: svc, tmpl: tmpl}, nil
+	return &Handler{svc: svc, tmpl: tmpl, authCfg: authCfg}, nil
 }
 
-// renderPage renders a full page. ActivePage is injected automatically
-// by merging the data struct's fields into a map alongside the base fields.
-func (h *Handler) renderPage(w http.ResponseWriter, name string, data any) {
+// renderPage renders a full page. ActivePage and CurrentUser are injected automatically.
+func (h *Handler) renderPage(w http.ResponseWriter, r *http.Request, name string, data any) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	if err := h.tmpl[name].ExecuteTemplate(w, "layout", h.enrich(name, data)); err != nil {
+	if err := h.tmpl[name].ExecuteTemplate(w, "layout", h.enrich(r, name, data)); err != nil {
 		slog.Error("render template", slog.String("name", name), slog.String("error", err.Error()))
 	}
 }
 
-func (*Handler) enrich(name string, data any) any {
+func (*Handler) enrich(r *http.Request, name string, data any) any {
+	user, _ := auth.UserFromContext(r.Context())
 	m := map[string]any{
-		"ActivePage": name,
+		"ActivePage":  name,
+		"CurrentUser": user,
 	}
 
 	v := reflect.ValueOf(data)
@@ -150,6 +153,16 @@ func parseTemplates(fsys fs.FS) (templates, error) {
 	}
 
 	t["partials"] = partials
+
+	// Standalone pages — parsed without the layout so they render as complete documents.
+	for _, name := range []string{"login"} {
+		parsed, parseErr := template.ParseFS(fsys, "templates/"+name+".html")
+		if parseErr != nil {
+			return nil, fmt.Errorf("parse standalone %s: %w", name, parseErr)
+		}
+
+		t[name] = parsed
+	}
 
 	return t, nil
 }
