@@ -4,7 +4,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPREADSHEET_ID=${SPREADSHEET_ID}
-      - SERVICE_ACCOUNT_PATH=/run/secrets/sa.json
-    volumes:
-      - ./service-account.json:/run/secrets/sa.json:ro
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY}
+      - APP_URL=${APP_URL}
+      - PORT=8080
