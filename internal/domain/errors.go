@@ -31,3 +31,15 @@ var ErrBudgetNotFound = errors.New("budget not found")
 
 // ErrUnauthenticated is returned when a repository call lacks a user ID in context.
 var ErrUnauthenticated = errors.New("unauthenticated")
+
+// ErrCategoryLimitReached is returned when the user already has the maximum number of categories.
+var ErrCategoryLimitReached = errors.New("category limit reached (max 100)")
+
+// ErrItemsMonthLimitReached is returned when the user already has the maximum number of items for a given month.
+var ErrItemsMonthLimitReached = errors.New("items per month limit reached (max 500)")
+
+// ErrItemDateOutOfRange is returned when an item date is more than one year in the past or future.
+var ErrItemDateOutOfRange = errors.New("item date must be within one year of today")
+
+// ErrBudgetMonthOutOfRange is returned when a budget month is more than one year in the past or future.
+var ErrBudgetMonthOutOfRange = errors.New("budget month must be within one year of today")
